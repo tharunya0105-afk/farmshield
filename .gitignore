@@ -1,0 +1,52 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+dist/
+build/
+*.egg
+
+# Virtual environments
+venv/
+.venv/
+env/
+ENV/
+
+# Database (regenerates on first run)
+backend/farmshield.db
+*.db
+
+# Uploaded images (user data)
+backend/uploads/
+backend/temp_uploads/
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Logs
+*.log
+logs/
+
+# Node (if added later)
+node_modules/
+npm-debug.log*
+.npm
+
+# Model store is checked in (large but required)
+# backend/model_store/*.onnx  # do NOT gitignore these

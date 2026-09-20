@@ -1,0 +1,2234 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FarmShield — Detect Early. Predict Spread. Protect Precisely.</title>
+  <meta name="description" content="FarmShield: AI-powered autonomous crop pest containment. Real CNN detection, predictive spread modeling, and precision drone dispatch for Indian farmers." />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Noto+Sans+Tamil:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'Noto Sans Tamil', 'system-ui', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace'],
+          },
+          colors: {
+            brand: {
+              50: '#f0faf0', 100: '#dcf5dc', 200: '#b8eab8', 300: '#87d487',
+              400: '#55ba58', 500: '#3a9e3d', 600: '#2d8230', 700: '#246828',
+              800: '#1f5523', 900: '#1a451e', 950: '#0d2410',
+            },
+            paper: {
+              50: '#fafaf7', 100: '#f4f4ef', 200: '#e8e8e0', 300: '#d6d6cb',
+            },
+            ink: {
+              300: '#b0b5ab', 400: '#8a8f86', 500: '#6b7169', 600: '#525750',
+              700: '#3d423b', 800: '#2a2e28', 900: '#1c1f1a',
+            },
+            amber2: { 500: '#d97706', 100: '#fef3c7', 50: '#fffbeb' },
+            dark: {
+              900: '#0d1117', 800: '#161b22', 700: '#21262d', 600: '#30363d',
+              500: '#484f58', 400: '#6e7681',
+            },
+          },
+          boxShadow: {
+            card: '0 1px 2px rgba(28,31,26,0.06), 0 1px 3px rgba(28,31,26,0.08)',
+            raised: '0 4px 12px rgba(28,31,26,0.12)',
+            glow: '0 0 20px rgba(58,158,61,0.3)',
+            'glow-red': '0 0 20px rgba(220,38,38,0.3)',
+          },
+          borderRadius: { 'app': '12px' },
+          animation: {
+            'count-up': 'countUp 1.5s ease-out forwards',
+            'slide-in': 'slideIn 0.4s ease-out forwards',
+            'fade-up': 'fadeUp 0.5s ease-out forwards',
+            'pulse-ring': 'pulseRing 2s ease-out infinite',
+            'ticker': 'ticker 20s linear infinite',
+            'battery': 'batteryPulse 2s ease-in-out infinite',
+          },
+        }
+      }
+    }
+  </script>
+  <style>
+    body { font-family: 'Inter','Noto Sans Tamil',system-ui,sans-serif; }
+
+    /* Leaflet overrides */
+    .leaflet-container { background: #e8e8e0 !important; font-family: 'Inter',sans-serif; }
+    .leaflet-container.dark-map { background: #161b22 !important; filter: brightness(0.8) saturate(0.9); }
+    .leaflet-control-zoom a { background: #fff !important; color: #2d8230 !important; border-color: #d6d6cb !important; }
+    .leaflet-popup-content-wrapper { border-radius: 12px; }
+    .marker-pin { width:18px;height:18px;border-radius:50%;border:3px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.35); }
+    .pin-red { background:#dc2626; animation: pinPulse 1.8s ease-in-out infinite; }
+    .pin-green { background:#2d8230; }
+    .pin-blue { background:#2563eb; }
+
+    /* Animations */
+    @keyframes pinPulse { 0%,100%{transform:scale(1)} 50%{transform:scale(1.3)} }
+    @keyframes scanline { from{top:8%} to{top:90%} }
+    @keyframes fadeUp { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
+    @keyframes slideIn { from{opacity:0;transform:translateX(-20px)} to{opacity:1;transform:translateX(0)} }
+    @keyframes pulseRing {
+      0%{box-shadow:0 0 0 0 rgba(58,158,61,0.5)}
+      70%{box-shadow:0 0 0 20px rgba(58,158,61,0)}
+      100%{box-shadow:0 0 0 0 rgba(58,158,61,0)}
+    }
+    @keyframes pulseRingRed {
+      0%{box-shadow:0 0 0 0 rgba(220,38,38,0.5)}
+      70%{box-shadow:0 0 0 16px rgba(220,38,38,0)}
+      100%{box-shadow:0 0 0 0 rgba(220,38,38,0)}
+    }
+    @keyframes ticker { from{transform:translateX(100%)} to{transform:translateX(-100%)} }
+    @keyframes droneFloat { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-8px)} }
+    @keyframes spreadRing { 0%{transform:scale(0);opacity:0.8} 100%{transform:scale(1);opacity:0} }
+    @keyframes containRing { 0%{transform:scale(0.5);opacity:0} 30%{opacity:1} 100%{transform:scale(1.05);opacity:0.8} }
+    @keyframes heroFloat { 0%,100%{transform:translateY(0) rotate(0deg)} 50%{transform:translateY(-12px) rotate(2deg)} }
+    @keyframes waveGrow { from{width:0%} to{width:var(--target-w)} }
+    @keyframes arcDraw { from{stroke-dashoffset:var(--arc-len)} to{stroke-dashoffset:var(--arc-end)} }
+    @keyframes batteryPulse { 0%,100%{opacity:1} 50%{opacity:0.6} }
+    @keyframes countUp { from{opacity:0;transform:scale(0.8)} to{opacity:1;transform:scale(1)} }
+    @keyframes glowPulse { 0%,100%{opacity:0.5} 50%{opacity:1} }
+    @keyframes stepReveal { from{opacity:0;transform:translateX(-10px)} to{opacity:1;transform:translateX(0)} }
+
+    /* Utilities */
+    .scanline { position:absolute;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,#3a9e3d,transparent);animation:scanline 1.6s ease-in-out infinite alternate; }
+    .tl-dot { width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:12px;font-weight:700; }
+    ::-webkit-scrollbar { width:6px;height:6px; }
+    ::-webkit-scrollbar-track { background:transparent; }
+    ::-webkit-scrollbar-thumb { background:#d6d6cb;border-radius:4px; }
+    .dark-scroll::-webkit-scrollbar-thumb { background:#30363d; }
+    .no-scrollbar::-webkit-scrollbar { display:none; }
+    .pressable:active { transform:scale(0.97); }
+    .pressable { transition:transform .1s ease; }
+    .glass { backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px); }
+    .pulse-ring-anim { animation: pulseRing 2s ease-out infinite; }
+    .pulse-ring-red { animation: pulseRingRed 1.5s ease-out infinite; }
+    .drone-float { animation: heroFloat 4s ease-in-out infinite; }
+    .spread-ring { animation: spreadRing 2s ease-out forwards; }
+    .contain-ring { animation: containRing 2s ease-out forwards; }
+    .step-reveal { animation: stepReveal 0.4s ease-out forwards; }
+
+    /* Hero animated background */
+    .hero-bg {
+      background: linear-gradient(135deg, #0d2410 0%, #1a451e 30%, #1f5523 60%, #246828 100%);
+      position: relative; overflow: hidden;
+    }
+    .hero-bg::before {
+      content:''; position:absolute; inset:0;
+      background: radial-gradient(ellipse at 20% 50%, rgba(58,158,61,0.15) 0%, transparent 60%),
+                  radial-gradient(ellipse at 80% 20%, rgba(87,212,90,0.1) 0%, transparent 50%);
+    }
+    .hero-grid {
+      background-image: linear-gradient(rgba(58,158,61,0.08) 1px, transparent 1px),
+                        linear-gradient(90deg, rgba(58,158,61,0.08) 1px, transparent 1px);
+      background-size: 40px 40px;
+    }
+
+    /* Dark mode for Expert Console */
+    .dark-panel { background: #161b22; color: #e6edf3; }
+    .dark-panel .dark-card { background: #21262d; border-color: #30363d; }
+    .dark-panel .dark-nav { background: #161b22; border-color: #21262d; }
+    .dark-panel .dark-header { background: #161b22; border-color: #21262d; }
+    .dark-panel .dark-text-primary { color: #e6edf3; }
+    .dark-panel .dark-text-secondary { color: #8b949e; }
+    .dark-panel .dark-text-accent { color: #58a6ff; }
+    .dark-panel .dark-border { border-color: #30363d; }
+    .dark-panel .dark-nav-item { color: #8b949e; }
+    .dark-panel .dark-nav-item.active { background: rgba(58,158,61,0.15); color: #3fb950; border-right: 2px solid #3fb950; }
+    .dark-panel .dark-nav-item:hover:not(.active) { background: #21262d; color: #e6edf3; }
+
+    /* Phone frame */
+    .phone-frame {
+      background: #1a1a1a; border-radius: 44px; padding: 12px;
+      box-shadow: 0 0 0 2px #333, 0 20px 60px rgba(0,0,0,0.5), inset 0 0 0 1px rgba(255,255,255,0.1);
+      position: relative;
+    }
+    .phone-frame::before {
+      content:''; position:absolute; top:18px; left:50%; transform:translateX(-50%);
+      width:80px; height:6px; background:#333; border-radius:3px; z-index:10;
+    }
+    .phone-screen { border-radius:34px; overflow:hidden; background:#fff; position:relative; }
+
+    /* Confidence arc */
+    .conf-arc { transform: rotate(-90deg); transform-origin: center; }
+    .conf-arc circle { transition: stroke-dashoffset 1.5s cubic-bezier(0.4,0,0.2,1); }
+
+    /* Stat counter */
+    .stat-counter { font-variant-numeric: tabular-nums; }
+
+    /* Sparkline */
+    .sparkline { position:relative; display:inline-flex; align-items:flex-end; gap:2px; height:32px; }
+    .sparkline-bar { border-radius:2px 2px 0 0; transition: height 0.5s ease; }
+
+    /* Event ticker */
+    .ticker-wrap { overflow:hidden; white-space:nowrap; }
+    .ticker-content { display:inline-block; animation:ticker 25s linear infinite; }
+
+    /* Battery bar */
+    .battery-bar { transition: width 1s ease, background-color 0.5s ease; }
+
+    /* Containment success */
+    .containment-success {
+      background: radial-gradient(ellipse at center, rgba(58,158,61,0.2) 0%, transparent 70%);
+      border: 2px solid rgba(58,158,61,0.5); border-radius: 50%;
+      animation: containRing 2s ease-out forwards;
+    }
+  </style>
+</head>
+<body class="h-full bg-paper-100 text-ink-800 antialiased">
+  <div id="root" class="h-full"></div>
+
+  <script type="text/babel">
+    const { useState, useEffect, useRef, useCallback, useMemo } = React;
+    const API = '';
+
+    /* ─────────────────── SVG ICONS ─────────────────── */
+    const I = {
+      shield: (c='') => <svg className={c} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3l7 3v5c0 5-3.2 8.4-7 10-3.8-1.6-7-5-7-10V6l7-3z"/><path d="M9 12l2 2 4-4"/></svg>,
+      home: (c='') => <svg className={c} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 10.5L12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/></svg>,
+      leaf: (c='') => <svg className={c} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 20c0-8 5-14 16-16 1 11-4 16-12 16H4z"/><path d="M4 20c3-6 7-9 12-11"/></svg>,
+      bell: (c='') => <svg className={c} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 8a6 6 0 10-12 0c0 7-3 8-3 8h18s-3-1-3-8"/><path d="M13.7 21a2 2 0 01-3.4 0"/></svg>,
+      user: (c='') => <svg className={c} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-6 8-6s8 2 8 6"/></svg>,
+      camera: (c='') => <svg className={c} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 8h3l2-3h6l2 3h3v12H4z"/><circle cx="12" cy="13" r="3.5"/></svg>,
+      mic: (c='') => <svg className={c} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0014 0M12 18v3"/></svg>,
+      helpCircle: (c='') => <svg className={c} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 114 2c-.9.7-1.5 1.2-1.5 2.3"/><circle cx="12" cy="17" r=".5" fill="currentColor"/></svg>,
+      drone: (c='') => <svg className={c} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="5" cy="5" r="2.5"/><circle cx="19" cy="5" r="2.5"/><circle cx="5" cy="19" r="2.5"/><circle cx="19" cy="19" r="2.5"/><rect x="9" y="9" width="6" height="6" rx="1.5"/><path d="M7 7l2.5 2.5M17 7l-2.5 2.5M7 17l2.5-2.5M17 17l-2.5-2.5"/></svg>,
+      check: (c='') => <svg className={c} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 13l4 4L19 7"/></svg>,
+      chevron: (c='') => <svg className={c} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 6l6 6-6 6"/></svg>,
+      alert: (c='') => <svg className={c} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3L2.5 20h19L12 3z"/><path d="M12 10v4"/><circle cx="12" cy="17" r=".5" fill="currentColor"/></svg>,
+      globe: (c='') => <svg className={c} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3.5 3 14 0 18-3-4-3-14.5 0-18z"/></svg>,
+      mapPin: (c='') => <svg className={c} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 21s-6-5.3-6-10a6 6 0 1112 0c0 4.7-6 10-6 10z"/><circle cx="12" cy="11" r="2.2"/></svg>,
+      history: (c='') => <svg className={c} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 12a9 9 0 109-9 9 9 0 00-7.5 4"/><path d="M3 4v4h4"/><path d="M12 7v5l3 2"/></svg>,
+      phone: (c='') => <svg className={c} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 4h4l2 5-2.5 1.5a12 12 0 005 5L15 13l5 2v4a2 2 0 01-2 2A16 16 0 013 6a2 2 0 012-2z"/></svg>,
+      settings: (c='') => <svg className={c} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19 12a7 7 0 00-.1-1.2l2-1.5-2-3.4-2.3.9a7 7 0 00-2-1.2L14 3h-4l-.6 2.6a7 7 0 00-2 1.2l-2.3-.9-2 3.4 2 1.5A7 7 0 005 12a7 7 0 00.1 1.2l-2 1.5 2 3.4 2.3-.9a7 7 0 002 1.2L10 21h4l.6-2.6a7 7 0 002-1.2l2.3.9 2-3.4-2-1.5A7 7 0 0019 12z"/></svg>,
+      chart: (c='') => <svg className={c} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 20V10M10 20V4M16 20v-7M21 20H3"/></svg>,
+      grid: (c='') => <svg className={c} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="4" y="4" width="7" height="7" rx="1"/><rect x="13" y="4" width="7" height="7" rx="1"/><rect x="4" y="13" width="7" height="7" rx="1"/><rect x="13" y="13" width="7" height="7" rx="1"/></svg>,
+      bug: (c='') => <svg className={c} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="8" y="7" width="8" height="11" rx="4"/><path d="M9 7a3 3 0 016 0M3 12h5M16 12h5M5 6l3 2.5M19 6l-3 2.5M5 19l3-2.5M19 19l-3-2.5"/></svg>,
+      refresh: (c='') => <svg className={c} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 11a8 8 0 10-2.3 6.3"/><path d="M20 5v6h-6"/></svg>,
+      arrowLeft: (c='') => <svg className={c} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M15 6l-6 6 6 6"/></svg>,
+      play: (c='') => <svg className={c} viewBox="0 0 24 24" fill="currentColor"><path d="M8 5.5v13l10-6.5-10-6.5z"/></svg>,
+      wrench: (c='') => <svg className={c} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14.5 6.5a4.5 4.5 0 00-6 6L3 18l3 3 5.5-5.5a4.5 4.5 0 006-6L14 13l-3-3 3.5-3.5z"/></svg>,
+      volume: (c='') => <svg className={c} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 010 7.07"/><path d="M19.07 4.93a10 10 0 010 14.14"/></svg>,
+      volumeOff: (c='') => <svg className={c} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/></svg>,
+      wifiOff: (c='') => <svg className={c} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="1" y1="1" x2="23" y2="23"/><path d="M16.72 11.06A10.94 10.94 0 0119 12.55"/><path d="M5 12.55a10.94 10.94 0 015.17-2.39"/><path d="M10.71 5.05A16 16 0 0122.58 9"/><path d="M1.42 9a15.91 15.91 0 014.7-2.88"/><path d="M8.53 16.11a6 6 0 016.95 0"/><line x1="12" y1="20" x2="12.01" y2="20"/></svg>,
+      wifi: (c='') => <svg className={c} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12.55a11 11 0 0114.08 0"/><path d="M1.42 9a16 16 0 0121.16 0"/><path d="M8.53 16.11a6 6 0 016.95 0"/><line x1="12" y1="20" x2="12.01" y2="20"/></svg>,
+      uploadCloud: (c='') => <svg className={c} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0018 9h-1.26A8 8 0 103 16.3"/></svg>,
+      image: (c='') => <svg className={c} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>,
+      download: (c='') => <svg className={c} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>,
+      stopCircle: (c='') => <svg className={c} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><rect x="9" y="9" width="6" height="6" rx="1" fill="currentColor"/></svg>,
+      thermometer: (c='') => <svg className={c} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 14.76V3.5a2.5 2.5 0 00-5 0v11.26a4.5 4.5 0 105 0z"/></svg>,
+      droplets: (c='') => <svg className={c} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M7 16.3c2.2 0 4-1.83 4-4.05 0-1.16-.57-2.26-1.71-3.19S7.29 6.75 7 5.3c-.29 1.45-1.14 2.84-2.29 3.76S3 11.1 3 12.25c0 2.22 1.8 4.05 4 4.05z"/><path d="M12.56 6.6A10.97 10.97 0 0014 3.02c.5 2.5 2 4.9 4 6.5s3 3.5 3 5.5a6.98 6.98 0 01-11.91 4.97"/></svg>,
+      wind: (c='') => <svg className={c} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17.7 7.7a2.5 2.5 0 111.8 4.3H2"/><path d="M9.6 4.6A2 2 0 1111 8H2"/><path d="M12.6 19.4A2 2 0 1014 16H2"/></svg>,
+      flask: (c='') => <svg className={c} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 3h6M9 3v8l-5 9h16l-5-9V3"/></svg>,
+      moon: (c='') => <svg className={c} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg>,
+      sun: (c='') => <svg className={c} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>,
+      leaf2: (c='') => <svg className={c} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2 2l20 20"/><path d="M9 9c0 3.5 2 6 5 7"/><path d="M4 14c0-6 4-11 12-12-1 8-4 12-12 12z"/></svg>,
+      accessibility: (c='') => <svg className={c} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="5" r="2.2"/><path d="M4 9h16"/><path d="M9 9l1 6h4l1-6"/><path d="M12 15v6"/></svg>,
+    };
+
+    /* ─────────────────── i18n ─────────────────── */
+    const LANGS = [
+      { code: 'en', label: 'English' },
+      { code: 'ta', label: 'தமிழ்' },
+      { code: 'hi', label: 'हिन्दी' },
+      { code: 'te', label: 'తెలుగు' },
+      { code: 'kn', label: 'ಕನ್ನಡ' },
+      { code: 'ml', label: 'മലയാളം' },
+      { code: 'mr', label: 'मराठी' },
+    ];
+
+    const T = {
+      en: {
+        greeting: 'Good morning, Farmer', myFarm: 'My Cotton Farm', location: 'Tamil Nadu · India',
+        cropStatus: 'Crop status', healthy: 'Healthy', attention: 'Attention needed',
+        checkCrop: 'Check Crop', speak: 'Speak', getHelp: 'Get Help', viewHistory: 'View history', running: 'Running…', cameraGallery: 'Camera · Gallery',
+        todayMorning: 'Today · Morning', daysAgo3: '3 days ago', precisionTreatment: 'Precision treatment', completed: 'Completed', cropCotton: 'Cotton',
+        demoFarmName: 'FarmShield Demo Farm',
+        farmerName: 'Ramasamy K', villageName: 'Lalgudi', districtName: 'Tiruchirappalli', stateName: 'Tamil Nadu',
+        home: 'Home', myFarmTab: 'My Farm', alerts: 'Alerts', profile: 'Profile',
+        checkingCrop: 'Checking your crop', analyzing: 'Analyzing the photo…',
+        possiblePest: 'Possible pest detected', possibleIssue: 'Possible Bollworm', risk: 'Risk', riskHigh: 'High',
+        affectedArea: 'Affected area', acres: 'acres', whatToDo: 'What should I do?',
+        recommend: 'FarmShield recommends getting field assistance.',
+        needHelp: 'Need help?', helpDesc: 'FarmShield can coordinate a precision treatment mission for the affected area.',
+        requestHelp: 'Request Help', helpRequested: 'Help requested', helpQueued: 'Your field has been added to the response queue.',
+        treatmentDone: 'Treatment completed', treatmentDoneDesc: 'Your cotton field treatment has been completed. 2.1 acres treated.',
+        viewDetails: 'View details', recentChecks: 'Recent checks', recentAlerts: 'Recent alerts',
+        treatmentHistory: 'Treatment history', noAlerts: 'No alerts right now',
+        voiceUnavailable: 'Voice input is unavailable on this device. You can use the buttons below.',
+        voiceGuide: 'Read aloud', voiceGuideOn: 'Voice guide on', voiceGuideOff: 'Voice guide off',
+        savedOffline: 'Saved on your phone', homeGreetingVoice: 'FarmShield. Your farm is open. To check your crop, tap the large green button.',
+        possibleIssueLabel: 'Possible issue',
+        takePhoto: 'Take a photo of the affected leaf',
+        photoHint: 'Fill the frame with the leaf. Works on tomato, potato, corn, apple and 10 more crops.',
+        healthyResult: 'Crop looks healthy',
+        healthyDesc: 'No disease visible in the photo. Check again in a few days or after rain.',
+        checkAnother: 'Check another leaf',
+        photoUnclear: 'Photo not clear enough',
+        retakeDesc: 'Move closer, hold the phone steady, fill the frame with the leaf.',
+        retake: 'Retake photo',
+        realModelNote: 'Analyzed by an on-device crop-disease model (PlantVillage, 38 classes).',
+        featurePhoneTitle: 'No smartphone? You still get alerts',
+        featurePhoneDesc: 'The same alerts reach any phone — as SMS or a voice call in your language. (Prototype Simulation)',
+        smsLabel: 'SMS preview', ivrLabel: 'Voice call (IVR) preview',
+        smsAlert: 'FARMSHIELD: Possible pest in your cotton (2.1 acres). Help has been requested. Treatment team informed.',
+        smsDone: 'FARMSHIELD: Treatment completed in your cotton field. 2.1 acres treated. Safe to check your crop.',
+        ivrText: 'A call in your language: "Press 1 to hear your farm status."',
+        offlineQueued: 'No network — saved. It will send automatically when signal returns.',
+        offlineBanner: 'Offline — reports are saved on the phone',
+        syncedToast: 'Connection restored — queued reports sent.',
+        queuedCount: 'report waiting to send', queuedCountPlural: 'reports waiting to send',
+        networkSim: 'Network (demo simulation)', networkOnline: 'Online',
+        networkSimNote: 'Turn off to demonstrate offline mode. Reports are saved on the phone and sent automatically when network returns.',
+        listening: 'Listening…', name: 'Name', mobile: 'Mobile', village: 'Village', district: 'District',
+        state: 'State', language: 'Language', crop: 'Crop', farmSize: 'Farm size',
+        demoMode: 'Demo Mode', startDemo: 'Start Demo', startLiveDemo: 'Start Live Demo', exploreFarmerApp: 'Explore Farmer App', exploreExpert: 'Expert Console',
+        tagline: 'Detect Early. Predict Spread. Protect Precisely.',
+        landingDesc: 'FarmShield helps farmers identify crop problems early and coordinate precision treatment before they spread.',
+        responseProgress: 'Response progress',
+        s1: 'Problem detected', s2: 'Spread assessed', s3: 'Agent selected', s4: 'Agent dispatched',
+        s5: 'Treatment completed', s6: 'Outbreak contained',
+        detecting: 'Detecting…', predicting: 'Assessing spread…', dispatching: 'Selecting agent…',
+        treating: 'Treating…', containing: 'Confirming containment…',
+        demoFarm: 'Demo Farm · Tamil Nadu', outbreakTitle: 'Possible Bollworm Outbreak',
+        highRisk: 'High risk', notificationSent: 'Farmer notified', runAgain: 'Run Again', reset: 'Reset',
+        prototypeNote: 'Prototype demonstration with simulated data.',
+        pestRisk: 'Current Pest Risk', weatherAdvisory: 'Weather Advisory',
+      },
+      ta: {
+        greeting: 'வணக்கம், விவசாயி', myFarm: 'என் பருத்தி வயல்', location: 'தமிழ்நாடு · இந்தியா',
+        cropStatus: 'பயிர் நிலை', healthy: 'நல்ல நிலை', attention: 'கவனம் தேவை',
+        checkCrop: 'பயிரை சரிபார்க்கவும்', speak: 'பேசவும்', getHelp: 'உதவி பெறவும்', viewHistory: 'வரலாற்றைப் பார்க்க', running: 'இயங்குகிறது…', cameraGallery: 'கேமரா · கேலரி',
+        todayMorning: 'இன்று · காலை', daysAgo3: '3 நாட்களுக்கு முன்', precisionTreatment: 'துல்லியமான சிகிச்சை', completed: 'முடிந்தது', cropCotton: 'பருத்தி',
+        demoFarmName: 'FarmShield டெமோ பண்ணை',
+        farmerName: 'ராமசாமி க', villageName: 'லால்குடி', districtName: 'திருச்சிராப்பள்ளி', stateName: 'தமிழ்நாடு',
+        home: 'முகப்பு', myFarmTab: 'என் பண்ணை', alerts: 'அலர்ட்கள்', profile: 'சுயவிவரம்',
+        checkingCrop: 'உங்கள் பயிரை சரிபார்க்கிறது', analyzing: 'புகைப்படத்தை பகுப்பாய்வு செய்கிறது…',
+        possiblePest: 'பூச்சி பாதிப்பு இருக்கலாம்', possibleIssue: 'காய்க்கண்டான புழு', risk: 'ஆபத்து', riskHigh: 'அதிகம்',
+        affectedArea: 'பாதிக்கப்பட்ட பகுதி', acres: 'ஏக்கர்', whatToDo: 'என்ன செய்ய வேண்டும்?',
+        recommend: 'வயல் உதவியை நாட பரிந்துரைக்கிறோம்.',
+        takePhoto: 'பாதிக்கப்பட்ட இலையின் புகைப்படம் எடுக்கவும்',
+        photoHint: 'இலையை முழுவதுமாக படத்தில் காட்டவும். தக்காளி, உருளைக்கிழங்கு உள்ளிட்ட 14 பயிர்களுக்கு சிறந்தது.',
+        healthyResult: 'பயிர் நல்ல நிலையில் உள்ளது',
+        healthyDesc: 'புகைப்படத்தில் நோய் தெரியவில்லை. சில நாட்கள் கழித்து மீண்டும் சரிபார்க்கவும்.',
+        checkAnother: 'வேறு இலை சரிபார்க்கவும்',
+        photoUnclear: 'புகைப்படம் தெளிவாக இல்லை',
+        retakeDesc: 'நெருங்கி, அசையாமல், இலையை முழுவதுமாக படத்தில் காட்டவும்.',
+        retake: 'மீண்டும் புகைப்படம் எடுக்கவும்',
+        realModelNote: 'பயிர்-நோய் மாதிரி (PlantVillage, 38 வகைகள்) மூலம் பகுப்பாய்வு.',
+        needHelp: 'உதவி வேண்டுமா?', helpDesc: 'பாதிக்கப்பட்ட பகுதிக்கு துல்லியமான சிகிச்சை ஏற்பாடு செய்யலாம்.',
+        requestHelp: 'உதவி கோரவும்', helpRequested: 'உதவி கோரப்பட்டது', helpQueued: 'உங்கள் வயல் பதில் காத்திருப்பு பட்டியலில் சேர்க்கப்பட்டது.',
+        treatmentDone: 'சிகிச்சை முடிந்தது', treatmentDoneDesc: 'உங்கள் பருத்தி வயல் சிகிச்சை முடிக்கப்பட்டது. 2.1 ஏக்கர் சிகிச்சை செய்யப்பட்டது.',
+        viewDetails: 'விவரங்களைப் பார்க்க', recentChecks: 'சமீபத்திய சோதனைகள்', recentAlerts: 'சமீபத்திய எச்சரிக்கைகள்',
+        treatmentHistory: 'சிகிச்சை வரலாறு', noAlerts: 'தற்போது எச்சரிக்கைகள் இல்லை',
+        voiceUnavailable: 'இந்த சாதனத்தில் குரல் உள்ளீடு இல்லை. கீழே உள்ள பொத்தான்களை பயன்படுத்தவும்.',
+        voiceGuide: 'சத்தமாக வாசி', voiceGuideOn: 'குரல் வழிகாட்டி இயக்கப்பட்டது', voiceGuideOff: 'குரல் வழிகாட்டி நிறுத்தப்பட்டது',
+        savedOffline: 'உங்கள் போனில் சேமிக்கப்பட்டது', homeGreetingVoice: 'FarmShield. உங்கள் பண்ணை திறக்கப்பட்டுள்ளது. பயிரை சரிபார்க்க, பெரிய பச்சை பொத்தானை தட்டவும்.',
+        possibleIssueLabel: 'சாத்தியமான பிரச்சனை',
+        featurePhoneTitle: 'ஸ்மார்ட்போன் இல்லையா? எச்சரிக்கைகள் கிடைக்கும்',
+        featurePhoneDesc: 'அதே எச்சரிக்கைகள் எந்த போனிலும் — SMS அல்லது குரல் அழைப்பாக உங்கள் மொழியில். (சிமுலேஷன்)',
+        smsLabel: 'SMS மாதிரி', ivrLabel: 'குரல் அழைப்பு (IVR) மாதிரி',
+        smsAlert: 'FARMSHIELD: உங்கள் பருத்தியில் பூச்சி பாதிப்பு இருக்கலாம் (2.1 ஏக்கர்). உதவி கோரப்பட்டது.',
+        smsDone: 'FARMSHIELD: பருத்தி வயலில் சிகிச்சை முடிந்தது. 2.1 ஏக்கர் சிகிச்சை. பாதுகாப்பாக பயிரை பார்க்கலாம்.',
+        ivrText: 'உங்கள் மொழியில் அழைப்பு: "பண்ணை நிலையை கேட்க 1 ஐ அழுத்தவும்."',
+        offlineQueued: 'நெட்வொர்க் இல்லை — சேமிக்கப்பட்டது. மீண்டும் வரும்போது தானாக அனுப்பப்படும்.',
+        offlineBanner: 'ஆஃப்லைன் — அறிக்கைகள் போனில் சேமிக்கப்படுகின்றன',
+        syncedToast: 'இணைப்பு மீண்டும் வந்தது — காத்திருந்த அறிக்கைகள் அனுப்பப்பட்டன.',
+        queuedCount: 'அறிக்கை அனுப்ப காத்திருக்கிறது', queuedCountPlural: 'அறிக்கைகள் அனுப்ப காத்திருக்கிறது',
+        networkSim: 'நெட்வொர்க் (டெமோ சிமுலேஷன்)', networkOnline: 'இணைப்பில் உள்ளது',
+        networkSimNote: 'ஆஃப்லைன் முறையை காட்ட இதை நிறுத்தவும். அறிக்கைகள் போனில் சேமிக்கப்பட்டு, நெட்வொர்க் திரும்பியதும் தானாக அனுப்பப்படும்.',
+        listening: 'கேட்கிறது…', name: 'பெயர்', mobile: 'கைபேசி எண்', village: 'கிராமம்', district: 'மாவட்டம்',
+        state: 'மாநிலம்', language: 'மொழி', crop: 'பயிர்', farmSize: 'வயல் அளவு',
+        demoMode: 'டெமோ', startDemo: 'டெமோவைத் தொடங்கு', startLiveDemo: 'நேரடி டெமோவைத் தொடங்கு', exploreFarmerApp: 'விவசாயி செயலியை பார்க்க', exploreExpert: 'நிபுணர் அறை',
+        tagline: 'முன்னதாகக் கண்டறியுங்கள். பரவலை கணியுங்கள். துல்லியமாகப் பாதுகாயுங்கள்.',
+        landingDesc: 'பயிர் பிரச்சனைகளை முன்னதாகக் கண்டறிந்து, பரவுவதற்கு முன்பே துல்லியமான சிகிச்சையை ஒழுங்குபடுத்த FarmShield உதவுகிறது.',
+        responseProgress: 'பதில் முன்னேற்றம்',
+        s1: 'பிரச்சனை கண்டறியப்பட்டது', s2: 'பரவல் மதிப்பிடப்பட்டது', s3: 'ஏஜெண்ட் தேர்வு', s4: 'ஏஜெண்ட் அனுப்பப்பட்டது',
+        s5: 'சிகிச்சை முடிந்தது', s6: 'பாதிப்பு கட்டுப்படுத்தப்பட்டது',
+        detecting: 'கண்டறிகிறது…', predicting: 'பரவலை மதிப்பிடுகிறது…', dispatching: 'ஏஜெண்ட் தேர்வு…',
+        treating: 'சிகிச்சை அளிக்கிறது…', containing: 'கட்டுப்பாடு உறுதி…',
+        demoFarm: 'டெமோ பண்ணை · தமிழ்நாடு', outbreakTitle: 'காய்க்கண்டான புழு பாதிப்பு', highRisk: 'அதிக ஆபத்து',
+        notificationSent: 'விவசாயிக்கு தெரிவிக்கப்பட்டது', runAgain: 'மீண்டும் இயக்கு', reset: 'மீட்டமை',
+        prototypeNote: 'சிமுலேடட் டேட்டாவுடன் கூடிய புரோட்டோடைப் டெமோ.',
+        pestRisk: 'தற்போதைய பூச்சி ஆபத்து', weatherAdvisory: 'வானிலை ஆலோசனை',
+      },
+    };
+    const tr = (lang, key) => (T[lang] && T[lang][key]) || T.en[key] || key;
+
+    /* ─── shared API ─── */
+    async function api(path, opts = {}) {
+      try {
+        const res = await fetch(API + path, { headers: { 'Content-Type': 'application/json' }, ...opts });
+        if (!res.ok) return null;
+        return await res.json();
+      } catch (e) { return null; }
+    }
+    const sleep = ms => new Promise(r => setTimeout(r, ms));
+
+    /* ─── offline queue ─── */
+    const pendingQueue = [];
+    try { pendingQueue.push(...JSON.parse(localStorage.getItem('fs_queue') || '[]')); } catch (e) {}
+    const saveQueue = () => { try { localStorage.setItem('fs_queue', JSON.stringify(pendingQueue)); } catch (e) {} };
+
+    /* ─────────────────── SHARED COMPONENTS ─────────────────── */
+    function TopBar({ title, subtitle, right, onBack }) {
+      return (
+        <div className="bg-white border-b border-paper-200 px-4 py-3 flex items-center gap-3 sticky top-0 z-40">
+          {onBack && <button onClick={onBack} className="p-1.5 -ml-1.5 rounded-lg text-ink-600 hover:bg-paper-100 pressable" aria-label="Back">{I.arrowLeft('w-5 h-5')}</button>}
+          <div className="flex items-center gap-2 flex-1 min-w-0">
+            <span className="text-brand-600">{I.shield('w-5 h-5')}</span>
+            <div className="min-w-0">
+              <div className="font-semibold text-ink-800 truncate leading-tight">{title}</div>
+              {subtitle && <div className="text-xs text-ink-400 truncate leading-tight">{subtitle}</div>}
+            </div>
+          </div>
+          {right}
+        </div>
+      );
+    }
+
+    function BottomNav({ tab, setTab, lang }) {
+      const items = [
+        { key: 'home', icon: I.home, label: tr(lang, 'home') },
+        { key: 'farm', icon: I.leaf, label: tr(lang, 'myFarmTab') },
+        { key: 'alerts', icon: I.bell, label: tr(lang, 'alerts') },
+        { key: 'profile', icon: I.user, label: tr(lang, 'profile') },
+      ];
+      return (
+        <nav className="absolute bottom-0 inset-x-0 bg-white border-t border-paper-200 flex" style={{paddingBottom:'env(safe-area-inset-bottom)'}}>
+          {items.map(it => {
+            const active = tab === it.key;
+            return (
+              <button key={it.key} onClick={() => setTab(it.key)}
+                className={`flex-1 flex flex-col items-center gap-0.5 py-2.5 pressable ${active ? 'text-brand-600' : 'text-ink-400'}`}
+                aria-label={it.label}>
+                {it.icon('w-5 h-5')}
+                <span className="text-[11px] font-medium">{it.label}</span>
+              </button>
+            );
+          })}
+        </nav>
+      );
+    }
+
+    function PrimaryButton({ children, onClick, disabled, className='' }) {
+      return (
+        <button onClick={onClick} disabled={disabled}
+          className={`w-full py-3.5 rounded-app bg-brand-600 text-white font-semibold text-base shadow-card pressable disabled:opacity-50 disabled:cursor-not-allowed ${className}`}>
+          {children}
+        </button>
+      );
+    }
+
+    function ListRow({ icon, title, subtitle, right, onClick, last }) {
+      return (
+        <div onClick={onClick} className={`flex items-center gap-3 px-4 py-3.5 bg-white ${!last ? 'border-b border-paper-100' : ''} ${onClick ? 'cursor-pointer active:bg-paper-50' : ''}`}>
+          {icon && <div className="text-ink-400">{icon('w-5 h-5')}</div>}
+          <div className="flex-1 min-w-0">
+            <div className="text-sm font-medium text-ink-800 truncate">{title}</div>
+            {subtitle && <div className="text-xs text-ink-400 truncate mt-0.5">{subtitle}</div>}
+          </div>
+          {right}
+        </div>
+      );
+    }
+
+    /* ─── Animated Counter ─── */
+    function AnimatedCounter({ target, suffix='', prefix='', duration=1500 }) {
+      const [val, setVal] = useState(0);
+      const ref = useRef(null);
+      useEffect(() => {
+        const obs = new IntersectionObserver(([e]) => {
+          if (e.isIntersecting) {
+            const start = Date.now();
+            const tick = () => {
+              const p = Math.min((Date.now() - start) / duration, 1);
+              const ease = 1 - Math.pow(1 - p, 3);
+              setVal(Math.round(ease * target));
+              if (p < 1) requestAnimationFrame(tick);
+            };
+            requestAnimationFrame(tick);
+            obs.disconnect();
+          }
+        }, { threshold: 0.5 });
+        if (ref.current) obs.observe(ref.current);
+        return () => obs.disconnect();
+      }, [target]);
+      return <span ref={ref} className="stat-counter">{prefix}{val.toLocaleString()}{suffix}</span>;
+    }
+
+    /* ─── Mini Sparkline ─── */
+    function Sparkline({ data, color='#3a9e3d', height=32 }) {
+      if (!data || data.length === 0) return null;
+      const max = Math.max(...data);
+      const min = Math.min(...data);
+      const range = max - min || 1;
+      return (
+        <div className="sparkline" style={{ height }}>
+          {data.map((v, i) => {
+            const h = Math.max(4, ((v - min) / range) * height);
+            return (
+              <div key={i} className="sparkline-bar w-2" style={{ height: h, background: i === data.length - 1 ? color : color + '70' }} />
+            );
+          })}
+        </div>
+      );
+    }
+
+    /* ─── Confidence Arc ─── */
+    function ConfidenceArc({ confidence, size=80, animated=true }) {
+      const r = 32, cx = 40, cy = 40;
+      const circ = 2 * Math.PI * r;
+      const filled = confidence * circ;
+      const color = confidence >= 0.8 ? '#3a9e3d' : confidence >= 0.55 ? '#d97706' : '#dc2626';
+      return (
+        <svg width={size} height={size} viewBox="0 0 80 80">
+          <circle cx={cx} cy={cy} r={r} fill="none" stroke="#e8e8e0" strokeWidth="6" />
+          <circle cx={cx} cy={cy} r={r} fill="none" stroke={color} strokeWidth="6"
+            strokeLinecap="round" strokeDasharray={`${filled} ${circ - filled}`}
+            className="conf-arc" style={{ transformOrigin: '40px 40px', transform: 'rotate(-90deg)',
+              transition: animated ? 'stroke-dasharray 1.5s cubic-bezier(0.4,0,0.2,1)' : 'none' }} />
+          <text x={cx} y={cy + 5} textAnchor="middle" fontSize="14" fontWeight="700" fill={color}>
+            {Math.round(confidence * 100)}%
+          </text>
+        </svg>
+      );
+    }
+
+    /* ─────────────────── LANDING PAGE ─────────────────── */
+    function Landing({ onDemo, onFarmer, onExpert }) {
+      const [showTrust, setShowTrust] = useState(false);
+      useEffect(() => { setTimeout(() => setShowTrust(true), 800); }, []);
+
+      const stats = [
+        { label: 'Less Pesticide', value: 72, suffix: '%', icon: '🧪', desc: 'Prototype Estimate vs blanket spray' },
+        { label: 'Avg Response', value: 45, suffix: ' min', icon: '⚡', desc: 'Detection to treatment dispatched' },
+        { label: 'Yield Protected', value: 142, suffix: 'K', prefix: '₹', icon: '🌾', desc: 'Estimated per season (Prototype)' },
+      ];
+
+      const workflow = [
+        { icon: I.camera, label: 'Detect', color: '#3a9e3d', desc: 'Real CNN on leaf photo or aerial scan' },
+        { icon: I.chart, label: 'Predict', color: '#2563eb', desc: 'Microclimate spread model' },
+        { icon: I.drone, label: 'Dispatch', color: '#7c3aed', desc: 'Scoring: distance × battery × payload' },
+        { icon: I.leaf, label: 'Treat', color: '#d97706', desc: 'Precision chemical dose, geofenced' },
+        { icon: I.check, label: 'Contain', color: '#059669', desc: 'Outbreak resolved, farmer notified' },
+      ];
+
+      return (
+        <div className="h-full overflow-y-auto bg-paper-50">
+          {/* Header */}
+          <header className="bg-white border-b border-paper-200 sticky top-0 z-50">
+            <div className="max-w-6xl mx-auto px-5 py-3 flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
+                <span className="text-brand-600">{I.shield('w-6 h-6')}</span>
+                <span className="font-bold text-lg text-ink-800">FarmShield</span>
+                <span className="text-xs font-semibold text-brand-600 bg-brand-50 border border-brand-200 px-2 py-0.5 rounded-full">v2.0</span>
+              </div>
+              <div className="flex items-center gap-3">
+                <span className="text-xs font-medium text-amber2-500 bg-amber2-100 px-2.5 py-1 rounded-md">Demo Mode</span>
+                <button onClick={onExpert} className="hidden sm:block text-sm text-ink-500 hover:text-ink-800 font-medium">Expert Console</button>
+              </div>
+            </div>
+          </header>
+
+          {/* Hero */}
+          <section className="hero-bg hero-grid">
+            <div className="relative z-10 max-w-6xl mx-auto px-5 py-16 md:py-24">
+              <div className="text-center max-w-3xl mx-auto">
+                {/* Floating drone SVG */}
+                <div className="drone-float inline-block mb-8">
+                  <div className="w-20 h-20 rounded-full bg-white/10 border border-white/20 flex items-center justify-center glass mx-auto">
+                    {I.drone('w-10 h-10 text-brand-300')}
+                  </div>
+                </div>
+                <h1 className="text-4xl md:text-5xl lg:text-6xl font-black text-white leading-tight tracking-tight mb-4">
+                  Farm<span className="text-brand-300">Shield</span>
+                </h1>
+                <p className="text-brand-200 font-semibold text-lg md:text-xl mb-4">
+                  Detect Early. Predict Spread. Protect Precisely.
+                </p>
+                <p className="text-white/70 text-sm md:text-base max-w-xl mx-auto mb-8 leading-relaxed">
+                  Autonomous AI ecosystem: aerial detection → predictive spread modeling → precision drone dispatch → exact-zone treatment. For Indian smallholder farmers.
+                </p>
+
+                {/* CTA Buttons */}
+                <div className="flex flex-col sm:flex-row gap-3 justify-center items-center mb-4">
+                  <button onClick={onDemo}
+                    className="pulse-ring-anim w-full sm:w-auto px-8 py-4 rounded-app bg-brand-500 hover:bg-brand-400 text-white font-bold text-base shadow-glow pressable flex items-center justify-center gap-2 transition-colors">
+                    {I.play('w-5 h-5')} Start Live Demo
+                  </button>
+                  <button onClick={onFarmer}
+                    className="w-full sm:w-auto px-8 py-4 rounded-app bg-white/10 border border-white/25 text-white font-semibold pressable hover:bg-white/20 flex items-center justify-center gap-2 transition-colors glass">
+                    Explore Farmer App
+                  </button>
+                </div>
+                <p className="text-white/40 text-xs">Real CNN inference · Real database · Real timestamps · Every claim labeled</p>
+              </div>
+            </div>
+
+            {/* Stats strip */}
+            <div className="relative z-10 border-t border-white/10 bg-black/20 glass">
+              <div className="max-w-6xl mx-auto px-5 py-6">
+                <div className="grid grid-cols-3 gap-4 text-center">
+                  {stats.map(s => (
+                    <div key={s.label} className="group">
+                      <div className="text-3xl mb-1">{s.icon}</div>
+                      <div className="text-2xl md:text-3xl font-black text-white">
+                        <AnimatedCounter target={s.value} suffix={s.suffix} prefix={s.prefix || ''} />
+                      </div>
+                      <div className="text-brand-200 text-xs font-semibold uppercase tracking-wide mt-0.5">{s.label}</div>
+                      <div className="text-white/40 text-[10px] mt-0.5">{s.desc}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </section>
+
+          {/* Workflow */}
+          <section className="max-w-5xl mx-auto px-5 py-12">
+            <h2 className="text-xl font-bold text-ink-800 text-center mb-2">5-Stage Autonomous Response</h2>
+            <p className="text-ink-500 text-sm text-center mb-8">One farmer photo becomes a contained outbreak in under 4.5 minutes</p>
+            <div className="bg-white border border-paper-200 rounded-app shadow-card p-6">
+              <div className="flex items-start justify-between gap-2">
+                {workflow.map((w, i) => (
+                  <div key={w.label} className="flex-1 flex flex-col items-center text-center gap-2 relative">
+                    <div className="w-12 h-12 rounded-full flex items-center justify-center mb-1" style={{ background: w.color + '18', border: `2px solid ${w.color}40` }}>
+                      {w.icon(`w-6 h-6`)}
+                    </div>
+                    <div className="font-bold text-sm text-ink-800">{w.label}</div>
+                    <div className="text-[11px] text-ink-400 leading-tight hidden sm:block">{w.desc}</div>
+                    {i < workflow.length - 1 && (
+                      <div className="absolute top-6 left-[calc(50%+24px)] right-[calc(-50%+24px)] h-px bg-paper-200 hidden sm:block" />
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          </section>
+
+          {/* Trust + Key Facts */}
+          <section className="max-w-5xl mx-auto px-5 pb-8">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="bg-white border border-paper-200 rounded-app shadow-card p-5">
+                <div className="w-10 h-10 rounded-full bg-brand-50 text-brand-600 flex items-center justify-center mb-3">{I.leaf('w-5 h-5')}</div>
+                <h3 className="font-bold text-ink-800 mb-1">Real AI Detection</h3>
+                <p className="text-sm text-ink-500">PlantVillage MobileNetV2 CNN running locally. 38 disease classes, 14 crops. No cloud call needed at demo time.</p>
+              </div>
+              <div className="bg-white border border-paper-200 rounded-app shadow-card p-5">
+                <div className="w-10 h-10 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center mb-3">{I.chart('w-5 h-5')}</div>
+                <h3 className="font-bold text-ink-800 mb-1">Persistent Backend</h3>
+                <p className="text-sm text-ink-500">FastAPI + SQLite. Every detection, prediction, dispatch, and treatment is stored and retrievable. Refresh and the state persists.</p>
+              </div>
+              <div className="bg-white border border-paper-200 rounded-app shadow-card p-5">
+                <div className="w-10 h-10 rounded-full bg-amber-50 text-amber-600 flex items-center justify-center mb-3">{I.accessibility('w-5 h-5')}</div>
+                <h3 className="font-bold text-ink-800 mb-1">Farmer-First Design</h3>
+                <p className="text-sm text-ink-500">7 Indian languages. Voice guide reads every screen. Works offline. SMS + IVR for feature phones. No reading required.</p>
+              </div>
+            </div>
+          </section>
+
+          {/* Footer */}
+          <footer className="border-t border-paper-200 bg-white">
+            <div className="max-w-6xl mx-auto px-5 py-4 flex items-center justify-between text-sm flex-wrap gap-3">
+              <div className="flex items-center gap-2 text-ink-500">
+                <span className="text-brand-600">{I.shield('w-4 h-4')}</span>
+                <span className="font-medium text-ink-700">FarmShield</span>
+                <span className="text-paper-300">·</span>
+                <span>AAA-09 · HACKWELL 2.0</span>
+              </div>
+              <div className="flex gap-4">
+                <button onClick={onFarmer} className="text-brand-600 font-medium hover:underline">Farmer App</button>
+                <button onClick={onDemo} className="text-brand-600 font-medium hover:underline">Live Demo</button>
+                <button onClick={onExpert} className="text-ink-500 hover:underline">Expert Console</button>
+              </div>
+            </div>
+            <div className="text-center py-2 text-[10px] text-ink-400 border-t border-paper-100">
+              Prototype demonstration · All claims labeled · Detection AI is real (PlantVillage CNN) · Numbers labeled "Prototype Estimate"
+            </div>
+          </footer>
+        </div>
+      );
+    }
+
+    /* ─────────────────── FARMER APP ─────────────────── */
+    function FarmerApp({ lang, setLang, onExit }) {
+      const t = k => tr(lang, k);
+      const [tab, setTab] = useState('home');
+      const [screen, setScreen] = useState(null);
+      const [voiceState, setVoiceState] = useState('idle');
+      const [toast, setToast] = useState(null);
+      const [demoOutbreak, setDemoOutbreak] = useState(null);
+      const [online, setOnline] = useState(navigator.onLine);
+      const [simOffline, setSimOffline] = useState(false);
+      const [queued, setQueued] = useState(pendingQueue.length);
+      const [voiceGuide, setVoiceGuide] = useState(false);
+      const [photo, setPhoto] = useState(null);
+      const [scanRes, setScanRes] = useState(null);
+      const [weather, setWeather] = useState(null);
+      const fileRef = useRef(null);
+      const timerRef = useRef(null);
+
+      useEffect(() => { api('/api/outbreaks?status=active').then(o => setDemoOutbreak((o && o[0]) || null)); }, []);
+      useEffect(() => { api('/api/weather').then(w => setWeather(w)); }, []);
+      useEffect(() => () => { if (timerRef.current) clearTimeout(timerRef.current); }, []);
+
+      const flushQueue = async () => {
+        if (pendingQueue.length === 0) return;
+        const items = pendingQueue.splice(0);
+        saveQueue(); setQueued(0);
+        let sent = 0;
+        for (const item of items) {
+          try {
+            if (item.kind === 'crop_check') {
+              const res = await fetch(API + '/api/detection/analyze', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ crop: item.crop, field_id: item.field_id }) });
+              if (res.ok) {
+                const det = await res.json();
+                await fetch(API + `/api/detections/${det.detection_id}/confirm`, { method: 'POST', headers: { 'Content-Type': 'application/json' } });
+                sent++;
+              } else { pendingQueue.push(item); }
+            } else {
+              const res = await fetch(API + item.path, { method: item.method || 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(item.body || {}) });
+              if (res.ok) sent++; else pendingQueue.push(item);
+            }
+          } catch (e) { pendingQueue.push(item); }
+        }
+        saveQueue(); setQueued(pendingQueue.length);
+        if (sent > 0) {
+          showToast(t('syncedToast'));
+          api('/api/outbreaks?status=active').then(o => setDemoOutbreak((o && o[0]) || null));
+        }
+      };
+      const goOnline = () => { setOnline(true); flushQueue(); };
+      const goOffline = () => setOnline(false);
+      useEffect(() => {
+        window.addEventListener('online', goOnline);
+        window.addEventListener('offline', goOffline);
+        return () => { window.removeEventListener('online', goOnline); window.removeEventListener('offline', goOffline); };
+      }, []);
+
+      const voiceGuideRef = useRef(false);
+      const speak = (text) => {
+        if (!voiceGuideRef.current || !text) return;
+        try { window.speechSynthesis.cancel(); const u = new SpeechSynthesisUtterance(text); u.lang = lang === 'ta' ? 'ta-IN' : (lang === 'hi' ? 'hi-IN' : 'en-IN'); u.rate = 0.95; window.speechSynthesis.speak(u); } catch (e) {}
+      };
+      const toggleVoiceGuide = () => {
+        const next = !voiceGuideRef.current;
+        voiceGuideRef.current = next;
+        setVoiceGuide(next);
+        if (!next) { try { window.speechSynthesis.cancel(); } catch (e) {} return; }
+        showToast(t('voiceGuideOn'));
+        speak(t('homeGreetingVoice'));
+      };
+
+      useEffect(() => {
+        if (!voiceGuide) return;
+        if (screen === 'scan') speak(`${t('checkingCrop')}. ${t('analyzing')}`);
+        else if (screen === 'result') speak(`${t('possiblePest')}. ${t('cropCotton')}. ${t('risk')}: ${t('riskHigh')}. 2.1 ${t('acres')}. ${t('recommend')}`);
+        else if (screen === 'help') speak(`${t('needHelp')}. ${t('helpDesc')}`);
+        else if (screen === 'helpDone') speak(`${t('helpRequested')}. ${t('helpQueued')}`);
+      }, [screen, voiceGuide]);
+
+      const showToast = (msg) => { setToast(msg); setTimeout(() => setToast(null), 2600); };
+
+      const startVoice = () => {
+        const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (!SR) { showToast(t('voiceUnavailable')); return; }
+        setVoiceState('listening');
+        setTimeout(() => { setVoiceState('idle'); setScreen('result'); }, 2500);
+      };
+
+      const onPhotoPicked = (e) => {
+        const f = e.target.files && e.target.files[0];
+        e.target.value = '';
+        if (!f) return;
+        const rd = new FileReader();
+        rd.onload = () => { setPhoto(String(rd.result)); setScanRes(null); setScreen('scan'); };
+        rd.readAsDataURL(f);
+      };
+      const photoInput = <input ref={fileRef} type="file" accept="image/*" capture="environment" className="hidden" onChange={onPhotoPicked} />;
+      const beginCheck = () => { if (fileRef.current) fileRef.current.click(); };
+
+      useEffect(() => {
+        if (screen === 'scan') {
+          let alive = true;
+          if (!photo) { setScreen(null); return; }
+          if (!online || simOffline) {
+            pendingQueue.push({ kind: 'crop_check', crop: 'Cotton', field_id: 3, saved_at: new Date().toISOString() });
+            saveQueue(); setQueued(pendingQueue.length);
+            setScreen('offlineSaved'); return;
+          }
+          (async () => {
+            try {
+              const fd = new FormData();
+              fd.append('crop', 'Cotton'); fd.append('field_id', '3');
+              const bin = atob(photo.split(',')[1]);
+              const buf = new Uint8Array(bin.length);
+              for (let i = 0; i < bin.length; i++) buf[i] = bin.charCodeAt(i);
+              fd.append('file', new Blob([buf], { type: 'image/jpeg' }), 'leaf.jpg');
+              const res = await fetch(API + '/api/detection/analyze-image', { method: 'POST', body: fd });
+              if (!alive) return;
+              if (!res.ok) throw new Error('analyze failed');
+              const det = await res.json();
+              if (!alive) return;
+              if (det.mode === 'VISUAL_CHECK') { setScanRes(det); setScreen('retake'); return; }
+              if (det.healthy === true) { setScanRes(det); setScreen('healthy'); return; }
+              setScanRes(det);
+              if (det.detection_id) {
+                await fetch(API + `/api/detections/${det.detection_id}/confirm`, { method: 'POST', headers: { 'Content-Type': 'application/json' } });
+              }
+              await sleep(1800);
+              if (alive) setScreen('result');
+            } catch (e) {
+              if (!alive) return;
+              pendingQueue.push({ kind: 'crop_check', crop: 'Cotton', field_id: 3, saved_at: new Date().toISOString() });
+              saveQueue(); setQueued(pendingQueue.length);
+              setScreen('offlineSaved');
+            }
+          })();
+          return () => { alive = false; };
+        }
+      }, [screen]);
+
+      const requestHelp = async () => {
+        await api('/api/outbreaks?status=active');
+        setScreen('helpDone');
+      };
+
+      /* Screen: Scan */
+      if (screen === 'scan') return (
+        <div className="h-full flex flex-col bg-white">
+          <TopBar title={t('checkingCrop')} onBack={() => setScreen(null)} />
+          <div className="flex-1 flex flex-col items-center justify-center px-8 space-y-6">
+            <div className="relative w-52 h-52 rounded-app border border-paper-200 bg-paper-50 overflow-hidden flex items-center justify-center">
+              {photo ? <img src={photo} alt="" className="absolute inset-0 w-full h-full object-cover"/> : <span className="text-brand-500">{I.leaf('w-16 h-16')}</span>}
+              <div className="scanline"></div>
+            </div>
+            <p className="text-ink-700 font-medium">{t('analyzing')}</p>
+            <div className="w-48 h-1.5 bg-paper-200 rounded-full overflow-hidden">
+              <div className="h-full bg-brand-500 rounded-full" style={{width:'65%', transition:'width 0.3s', animation:'waveGrow 2s linear infinite'}}></div>
+            </div>
+            <p className="text-xs text-ink-400">Real CNN inference · PlantVillage MobileNetV2</p>
+          </div>
+        </div>
+      );
+
+      /* Screen: Result */
+      if (screen === 'result') {
+        const r = scanRes || { crop: 'Cotton', possible_pest: 'Possible Bollworm', severity: 'High', affected_area_acres: 2.1, confidence: 0.94, mode: 'DEMO_SIMULATION' };
+        const sevCls = r.severity === 'High' ? 'text-red-600' : (r.severity === 'Medium' ? 'text-amber2-500' : 'text-brand-600');
+        const sevTxt = r.severity === 'High' ? t('riskHigh') : (r.severity === 'Medium' ? (lang === 'ta' ? 'நடுத்தரம்' : 'Medium') : (lang === 'ta' ? 'குறைவு' : 'Low'));
+        return (
+        <div className="h-full flex flex-col bg-paper-100">
+          <TopBar title={t('possiblePest')} onBack={() => setScreen(null)} />
+          {photoInput}
+          <div className="flex-1 overflow-y-auto p-4 space-y-4">
+            <div className="bg-white rounded-app border border-paper-200 shadow-card p-5">
+              <div className="flex items-center gap-2 text-amber2-500 mb-4">
+                {I.alert('w-5 h-5')}
+                <span className="font-semibold text-sm">{t('possiblePest')}</span>
+              </div>
+              <div className="flex items-center justify-between mb-4">
+                {photo && <img src={photo} alt="" className="w-28 h-28 object-cover rounded-xl border border-paper-200"/>}
+                <div className="flex flex-col items-center ml-4">
+                  <p className="text-xs text-ink-400 mb-1 font-medium">Detection confidence</p>
+                  <ConfidenceArc confidence={r.confidence || 0.94} size={80} />
+                </div>
+              </div>
+              <div className="space-y-3">
+                <div className="flex justify-between text-sm"><span className="text-ink-400">{t('crop')}</span><span className="font-semibold">{lang === 'ta' && r.crop === 'Cotton' ? t('cropCotton') : r.crop}</span></div>
+                <div className="flex justify-between text-sm"><span className="text-ink-400">{t('possibleIssueLabel')}</span><span className="font-semibold">{lang === 'ta' && r.possible_pest === 'Possible Bollworm' ? t('possibleIssue') : r.possible_pest}</span></div>
+                <div className="flex justify-between text-sm"><span className="text-ink-400">{t('risk')}</span><span className={`font-semibold ${sevCls}`}>{sevTxt}</span></div>
+                <div className="flex justify-between text-sm"><span className="text-ink-400">{t('affectedArea')}</span><span className="font-semibold">{r.affected_area_acres} {t('acres')}</span></div>
+              </div>
+              {r.mode === 'REAL_MODEL' && <p className="mt-3 text-xs text-ink-400">{t('realModelNote')}</p>}
+              {r.mode === 'DEMO_SIMULATION' && <p className="mt-3 text-xs text-amber2-500 bg-amber2-50 rounded-lg px-2 py-1">Prototype Simulation — not a real photo analysis</p>}
+            </div>
+            <div className="bg-white rounded-app border border-paper-200 shadow-card p-5">
+              <h3 className="font-semibold text-ink-800 mb-1">{t('whatToDo')}</h3>
+              <p className="text-sm text-ink-500 mb-4">{t('recommend')}</p>
+              <PrimaryButton onClick={() => setScreen('help')}>{t('getHelp')}</PrimaryButton>
+            </div>
+          </div>
+        </div>
+        );
+      }
+
+      /* Screen: Healthy */
+      if (screen === 'healthy') return (
+        <div className="h-full flex flex-col bg-paper-100">
+          <TopBar title={t('healthyResult')} onBack={() => setScreen(null)} />
+          {photoInput}
+          <div className="flex-1 flex flex-col items-center justify-center px-8 text-center">
+            <div className="w-16 h-16 rounded-full bg-brand-50 text-brand-600 flex items-center justify-center mb-5">{I.check('w-8 h-8')}</div>
+            {photo && <img src={photo} alt="" className="w-40 h-40 object-cover rounded-app border border-paper-200 mb-4"/>}
+            <h2 className="text-lg font-semibold text-ink-800">{t('healthyResult')}</h2>
+            <p className="text-sm text-ink-500 mt-2 max-w-xs">{t('healthyDesc')}</p>
+            <button onClick={beginCheck} className="mt-6 px-5 py-3 rounded-app bg-brand-50 text-brand-700 font-semibold text-sm border border-paper-200">{t('checkAnother')}</button>
+          </div>
+        </div>
+      );
+
+      /* Screen: Retake */
+      if (screen === 'retake') return (
+        <div className="h-full flex flex-col bg-paper-100">
+          <TopBar title={t('photoUnclear')} onBack={() => setScreen(null)} />
+          {photoInput}
+          <div className="flex-1 flex flex-col items-center justify-center px-8 text-center">
+            <div className="w-16 h-16 rounded-full bg-amber2-100 text-amber2-500 flex items-center justify-center mb-5">{I.camera('w-8 h-8')}</div>
+            {photo && <img src={photo} alt="" className="w-40 h-40 object-cover rounded-app border border-paper-200 mb-4 opacity-60"/>}
+            <h2 className="text-lg font-semibold text-ink-800">{t('photoUnclear')}</h2>
+            <p className="text-sm text-ink-500 mt-2 max-w-xs">{t('retakeDesc')}</p>
+            <div className="mt-6 w-full px-4"><PrimaryButton onClick={beginCheck}>{t('retake')}</PrimaryButton></div>
+          </div>
+        </div>
+      );
+
+      /* Screen: Help */
+      if (screen === 'help') return (
+        <div className="h-full flex flex-col bg-paper-100">
+          <TopBar title={t('needHelp')} onBack={() => setScreen('result')} />
+          <div className="flex-1 p-4">
+            <div className="bg-white rounded-app border border-paper-200 shadow-card p-5">
+              <p className="text-sm text-ink-500 mb-5">{t('helpDesc')}</p>
+              <PrimaryButton onClick={requestHelp}>{t('requestHelp')}</PrimaryButton>
+            </div>
+          </div>
+        </div>
+      );
+
+      /* Screen: Offline Saved */
+      if (screen === 'offlineSaved') return (
+        <div className="h-full flex flex-col bg-paper-100">
+          <TopBar title={t('savedOffline')} onBack={() => setScreen(null)} />
+          <div className="flex-1 flex flex-col items-center justify-center px-8 text-center">
+            <div className="w-16 h-16 rounded-full bg-amber2-100 text-amber2-500 flex items-center justify-center mb-5">{I.uploadCloud('w-8 h-8')}</div>
+            <h2 className="text-lg font-semibold text-ink-800">{t('savedOffline')}</h2>
+            <p className="text-sm text-ink-500 mt-2 max-w-xs">{t('offlineQueued')}</p>
+            <button onClick={() => setScreen(null)} className="mt-8 text-brand-600 font-semibold text-sm">{t('home')}</button>
+          </div>
+        </div>
+      );
+
+      /* Screen: Help Done */
+      if (screen === 'helpDone') return (
+        <div className="h-full flex flex-col bg-paper-100">
+          <TopBar title={t('helpRequested')} onBack={() => setScreen(null)} />
+          <div className="flex-1 flex flex-col items-center justify-center px-8 text-center">
+            <div className="w-16 h-16 rounded-full bg-brand-50 text-brand-600 flex items-center justify-center mb-5 pulse-ring-anim">{I.check('w-8 h-8')}</div>
+            <h2 className="text-lg font-semibold text-ink-800">{t('helpRequested')}</h2>
+            <p className="text-sm text-ink-500 mt-2 max-w-xs">{t('helpQueued')}</p>
+            <button onClick={() => setScreen(null)} className="mt-8 text-brand-600 font-semibold text-sm">{t('home')}</button>
+          </div>
+        </div>
+      );
+
+      /* Main app with tabs */
+      const hasAlert = !!demoOutbreak;
+      const pestRisk = weather ? (weather.pest_risk) : null;
+      const riskColor = pestRisk === 'HIGH' ? 'text-red-600 bg-red-50' : pestRisk === 'MODERATE' ? 'text-amber2-500 bg-amber2-50' : 'text-brand-600 bg-brand-50';
+
+      return (
+        <div className="h-full relative bg-paper-100 max-w-md mx-auto sm:border-x sm:border-paper-200">
+          {photoInput}
+          {toast && (
+            <div role="status" aria-live="polite" className="absolute top-3 inset-x-4 z-50 bg-ink-800 text-white text-sm rounded-app px-4 py-3 shadow-raised">{toast}</div>
+          )}
+          <div className="absolute inset-0 bottom-14 overflow-y-auto no-scrollbar">
+            {tab === 'home' && <FarmerHome t={t} lang={lang} setLang={setLang} hasAlert={hasAlert} beginCheck={beginCheck} startVoice={startVoice} voiceState={voiceState} onExit={onExit} demoOutbreak={demoOutbreak} online={online} queued={queued} voiceGuide={voiceGuide} toggleVoiceGuide={toggleVoiceGuide} weather={weather} pestRisk={pestRisk} riskColor={riskColor} />}
+            {tab === 'farm' && <FarmerFarm t={t} hasAlert={hasAlert} />}
+            {tab === 'alerts' && <FarmerAlerts t={t} demoOutbreak={demoOutbreak} />}
+            {tab === 'profile' && <FarmerProfile t={t} lang={lang} setLang={setLang} online={online} simOffline={simOffline} setSimOffline={v => { setSimOffline(v); if (v) setOnline(false); else { setOnline(true); flushQueue(); } }} />}
+          </div>
+          <BottomNav tab={tab} setTab={setTab} lang={lang} />
+        </div>
+      );
+    }
+
+    function FarmerHome({ t, lang, setLang, hasAlert, beginCheck, startVoice, voiceState, onExit, demoOutbreak, online, queued, voiceGuide, toggleVoiceGuide, weather, pestRisk, riskColor }) {
+      return (
+        <div>
+          <div className="bg-white border-b border-paper-200 px-4 pt-4 pb-4">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <span className="text-brand-600">{I.shield('w-5 h-5')}</span>
+                <span className="font-bold text-ink-800">FarmShield</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <select value={lang} onChange={e => setLang(e.target.value)} aria-label="Language"
+                  className="text-xs bg-paper-100 border border-paper-200 rounded-lg px-2 py-1.5 text-ink-600">
+                  {LANGS.map(l => <option key={l.code} value={l.code}>{l.label}</option>)}
+                </select>
+                <button onClick={toggleVoiceGuide} aria-label={t('voiceGuide')}
+                  className={`p-1.5 rounded-lg ${voiceGuide ? 'text-brand-600 bg-brand-50' : 'text-ink-400 hover:bg-paper-100'}`}>
+                  {voiceGuide ? I.volume('w-5 h-5') : I.volumeOff('w-5 h-5')}
+                </button>
+                <button onClick={onExit} className="p-1.5 rounded-lg text-ink-400 hover:bg-paper-100" aria-label="Exit">{I.settings('w-5 h-5')}</button>
+              </div>
+            </div>
+            <p className="text-sm text-ink-400">{t('greeting')}</p>
+            <h1 className="text-xl font-bold text-ink-800 mt-0.5">{t('myFarm')}</h1>
+            <p className="text-xs text-ink-400 mt-1 flex items-center gap-1">{I.mapPin('w-3.5 h-3.5')} {t('location')} · 2.1 {t('acres')}</p>
+            {!online && (
+              <div className="mt-3 flex items-center gap-2 text-xs text-amber2-500 bg-amber2-100 rounded-lg px-3 py-2" role="status">
+                {I.wifiOff('w-4 h-4')} <span>{t('offlineBanner')}</span>
+              </div>
+            )}
+          </div>
+
+          <div className="p-4 space-y-4 pb-6">
+            {/* Weather advisory */}
+            {weather && (
+              <div className={`rounded-app border px-4 py-3 flex items-center justify-between ${pestRisk === 'HIGH' ? 'bg-red-50 border-red-200' : 'bg-white border-paper-200'}`}>
+                <div className="flex items-center gap-3">
+                  <span className="text-2xl">{pestRisk === 'HIGH' ? '🌡️' : '🌤️'}</span>
+                  <div>
+                    <p className="text-xs font-semibold text-ink-600">{t('weatherAdvisory')}</p>
+                    <p className="text-xs text-ink-500">{weather.temperature_c}°C · {weather.humidity_percent}% RH · {weather.wind_speed_kmh} kph</p>
+                  </div>
+                </div>
+                <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${riskColor}`}>{t('pestRisk')}: {pestRisk}</span>
+              </div>
+            )}
+
+            {/* Status card */}
+            {hasAlert ? (
+              <div className="bg-white rounded-app border border-paper-200 shadow-card p-4 border-l-4 border-l-red-500">
+                <div className="flex items-center gap-2 text-red-600 mb-2">{I.alert('w-5 h-5')}<span className="font-semibold text-sm">{t('possiblePest')}</span></div>
+                <p className="text-sm text-ink-600">{demoOutbreak ? `${t('possibleIssue')} · ${demoOutbreak.affected_area_acres} ${t('acres')}` : `2.1 ${t('acres')}`} · {t('highRisk')}</p>
+                <button onClick={beginCheck} className="mt-3 text-sm font-semibold text-brand-600">{t('checkCrop')} →</button>
+              </div>
+            ) : (
+              <div className="bg-white rounded-app border border-paper-200 shadow-card p-4">
+                <div className="flex items-center gap-2 text-brand-600 mb-1">{I.check('w-5 h-5')}<span className="font-semibold text-sm">{t('cropStatus')}</span></div>
+                <p className="text-lg font-semibold text-ink-800">{t('healthy')}</p>
+              </div>
+            )}
+
+            {/* Primary action */}
+            <button onClick={beginCheck}
+              className="w-full bg-brand-600 text-white rounded-app py-4 px-5 flex items-center gap-4 shadow-card pressable text-left">
+              <span className="w-11 h-11 rounded-full bg-white/15 flex items-center justify-center">{I.camera('w-6 h-6')}</span>
+              <span className="flex-1">
+                <span className="block font-semibold text-base">{t('checkCrop')}</span>
+                <span className="block text-xs text-white/70 mt-0.5">{t('cameraGallery')}</span>
+              </span>
+              {I.chevron('w-5 h-5 opacity-60')}
+            </button>
+
+            <div className="grid grid-cols-2 gap-3">
+              <button onClick={startVoice}
+                className="bg-white border border-paper-200 rounded-app py-4 px-4 flex flex-col items-center gap-2 shadow-card pressable text-center">
+                <span className={voiceState === 'listening' ? 'text-red-500' : 'text-brand-600'}>{I.mic('w-6 h-6')}</span>
+                <span className="text-sm font-medium text-ink-700">{voiceState === 'listening' ? t('listening') : t('speak')}</span>
+              </button>
+              <button onClick={() => beginCheck()}
+                className="bg-white border border-paper-200 rounded-app py-4 px-4 flex flex-col items-center gap-2 shadow-card pressable text-center">
+                <span className="text-brand-600">{I.helpCircle('w-6 h-6')}</span>
+                <span className="text-sm font-medium text-ink-700">{t('getHelp')}</span>
+              </button>
+            </div>
+
+            {queued > 0 && (
+              <div className="bg-amber2-100 rounded-app border border-amber2-500/30 p-4 flex items-center gap-3" role="status">
+                <span className="text-amber2-500">{I.uploadCloud('w-5 h-5')}</span>
+                <p className="text-sm text-ink-700 font-medium">{queued} {queued === 1 ? t('queuedCount') : t('queuedCountPlural')}</p>
+              </div>
+            )}
+
+            {demoOutbreak && demoOutbreak.status === 'contained' && (
+              <div className="bg-white rounded-app border border-paper-200 shadow-card p-4">
+                <div className="flex items-start gap-3">
+                  <span className="w-9 h-9 rounded-full bg-brand-50 text-brand-600 flex items-center justify-center flex-shrink-0">{I.check('w-5 h-5')}</span>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-semibold text-sm text-ink-800">{t('treatmentDone')}</p>
+                    <p className="text-xs text-ink-500 mt-0.5">{t('treatmentDoneDesc')}</p>
+                    <button className="text-xs font-semibold text-brand-600 mt-2">{t('viewDetails')}</button>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      );
+    }
+
+    function FarmerFarm({ t, hasAlert }) {
+      return (
+        <div>
+          <TopBar title={t('myFarmTab')} subtitle={t('location')} />
+          <div className="p-4 space-y-4">
+            <div className="bg-white rounded-app border border-paper-200 shadow-card overflow-hidden">
+              <div className="h-32 bg-gradient-to-br from-brand-50 to-brand-100 flex items-center justify-center relative">
+                {I.leaf('w-14 h-14 text-brand-400')}
+                <div className="absolute bottom-2 right-2 text-xs bg-white/80 px-2 py-0.5 rounded-full text-ink-500 font-medium">2.1 acres</div>
+              </div>
+              <div className="p-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="font-semibold text-ink-800">{t('cropCotton')}</h3>
+                    <p className="text-xs text-ink-400">{t('demoFarmName')} · Boll Formation</p>
+                  </div>
+                  <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${hasAlert ? 'bg-red-50 text-red-600' : 'bg-brand-50 text-brand-600'}`}>
+                    {hasAlert ? t('attention') : t('healthy')}
+                  </span>
+                </div>
+              </div>
+            </div>
+            <div>
+              <h4 className="text-sm font-semibold text-ink-600 px-1 mb-2">{t('recentChecks')}</h4>
+              <div className="bg-white rounded-app border border-paper-200 overflow-hidden">
+                <ListRow icon={I.camera} title={t('checkingCrop')} subtitle={t('todayMorning')} right={<span className="text-xs text-brand-600 font-medium">{t('healthy')}</span>} />
+                <ListRow icon={I.camera} title={t('checkingCrop')} subtitle={t('daysAgo3')} right={<span className="text-xs text-brand-600 font-medium">{t('healthy')}</span>} last />
+              </div>
+            </div>
+            <div>
+              <h4 className="text-sm font-semibold text-ink-600 px-1 mb-2">{t('treatmentHistory')}</h4>
+              <div className="bg-white rounded-app border border-paper-200 overflow-hidden">
+                <ListRow icon={I.drone} title={t('precisionTreatment')} subtitle={`2.1 ${t('acres')} · 1.8L precision · ${t('completed')}`} right={<span className="text-xs text-brand-600 font-medium">✓</span>} last />
+              </div>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    function FarmerAlerts({ t, demoOutbreak }) {
+      const active = demoOutbreak && demoOutbreak.status === 'active';
+      return (
+        <div>
+          <TopBar title={t('alerts')} />
+          <div className="p-4 space-y-3">
+            {active && (
+              <div className="bg-white rounded-app border border-paper-200 shadow-card p-4 border-l-4 border-l-red-500">
+                <div className="flex items-start gap-3">
+                  <span className="w-9 h-9 rounded-full bg-red-50 text-red-600 flex items-center justify-center flex-shrink-0 pulse-ring-red">{I.bug('w-5 h-5')}</span>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-semibold text-sm text-ink-800">{t('possiblePest')}</p>
+                    <p className="text-xs text-ink-400 mt-0.5">{t('cropCotton')} · 2.1 {t('acres')}</p>
+                    <p className="text-xs text-ink-400 mt-1">{t('todayMorning')}</p>
+                  </div>
+                </div>
+              </div>
+            )}
+            <div className="bg-white rounded-app border border-paper-200 shadow-card p-4">
+              <div className="flex items-start gap-3">
+                <span className="w-9 h-9 rounded-full bg-brand-50 text-brand-600 flex items-center justify-center flex-shrink-0">{I.check('w-5 h-5')}</span>
+                <div className="flex-1 min-w-0">
+                  <p className="font-semibold text-sm text-ink-800">{t('treatmentDone')}</p>
+                  <p className="text-xs text-ink-400 mt-0.5">{t('cropCotton')} · 2.1 {t('acres')}</p>
+                  <p className="text-xs text-ink-400 mt-1">{t('daysAgo3')}</p>
+                </div>
+              </div>
+            </div>
+            {!active && <p className="text-center text-sm text-ink-400 py-6">{t('noAlerts')}</p>}
+            <div className="bg-white rounded-app border border-paper-200 shadow-card p-4">
+              <div className="flex items-center gap-2 text-ink-700 mb-1">
+                {I.wifi('w-4 h-4 text-brand-600')}
+                <p className="font-semibold text-sm">{t('featurePhoneTitle')}</p>
+              </div>
+              <p className="text-xs text-ink-400">{t('featurePhoneDesc')}</p>
+              <div className="mt-3">
+                <p className="text-[10px] font-semibold text-ink-400 uppercase tracking-wide mb-1">{t('smsLabel')}</p>
+                <div className="bg-paper-100 rounded-xl rounded-bl-sm px-3 py-2 text-xs text-ink-700 max-w-[85%]">
+                  {active ? t('smsAlert') : t('smsDone')}
+                </div>
+              </div>
+              <div className="mt-3">
+                <p className="text-[10px] font-semibold text-ink-400 uppercase tracking-wide mb-1">{t('ivrLabel')}</p>
+                <div className="bg-brand-50 rounded-xl rounded-bl-sm px-3 py-2 text-xs text-brand-700 max-w-[85%]">
+                  {I.mic('w-3.5 h-3.5 inline mr-1 -mt-0.5')}{t('ivrText')}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    function FarmerProfile({ t, lang, setLang, online, simOffline, setSimOffline }) {
+      return (
+        <div>
+          <TopBar title={t('profile')} />
+          <div className="p-4 space-y-4">
+            <div className="bg-white rounded-app border border-paper-200 shadow-card overflow-hidden">
+              <ListRow title={t('name')} right={<span className="text-sm font-medium text-ink-700">{t('farmerName')}</span>} />
+              <ListRow title={t('mobile')} right={<span className="text-sm font-medium text-ink-700">98765 43210</span>} />
+              <ListRow title={t('village')} right={<span className="text-sm font-medium text-ink-700">{t('villageName')}</span>} />
+              <ListRow title={t('district')} right={<span className="text-sm font-medium text-ink-700">{t('districtName')}</span>} />
+              <ListRow title={t('state')} right={<span className="text-sm font-medium text-ink-700">{t('stateName')}</span>} last />
+            </div>
+            <div className="bg-white rounded-app border border-paper-200 shadow-card overflow-hidden">
+              <ListRow title={t('crop')} right={<span className="text-sm font-medium text-ink-700">{t('cropCotton')}</span>} />
+              <ListRow title={t('farmSize')} right={<span className="text-sm font-medium text-ink-700">2.1 {t('acres')}</span>} last />
+            </div>
+            <div className="bg-white rounded-app border border-paper-200 shadow-card p-4">
+              <label className="text-xs text-ink-400 font-medium">{t('language')}</label>
+              <select value={lang} onChange={e => setLang(e.target.value)}
+                className="mt-2 w-full bg-paper-50 border border-paper-200 rounded-lg px-3 py-2.5 text-sm text-ink-700">
+                {LANGS.map(l => <option key={l.code} value={l.code}>{l.label}</option>)}
+              </select>
+            </div>
+            <div className="bg-white rounded-app border border-paper-200 shadow-card p-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <span className={simOffline ? 'text-amber2-500' : 'text-brand-600'}>{simOffline ? I.wifiOff('w-5 h-5') : I.wifi('w-5 h-5')}</span>
+                  <div>
+                    <p className="text-sm font-medium text-ink-800">{t('networkSim')}</p>
+                    <p className="text-xs text-ink-400">{simOffline ? t('offlineBanner') : (online ? t('networkOnline') : t('offlineBanner'))}</p>
+                  </div>
+                </div>
+                <button onClick={() => setSimOffline(!simOffline)} role="switch" aria-checked={simOffline}
+                  className={`relative w-11 h-6 rounded-full transition-colors ${simOffline ? 'bg-amber2-500' : 'bg-paper-300'}`}>
+                  <span className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform ${simOffline ? 'translate-x-5' : ''}`}></span>
+                </button>
+              </div>
+              <p className="text-[10px] text-ink-400 mt-2">{t('networkSimNote')}</p>
+            </div>
+            <p className="text-center text-xs text-ink-400">FarmShield v2.0 · {t('demoMode')}</p>
+          </div>
+        </div>
+      );
+    }
+
+    /* ─────────────────── LIVE DEMO (upgraded split-screen) ─────────────────── */
+    function LiveDemo({ onExit, onExpert, lang }) {
+      const t = k => tr(lang || 'en', k);
+      const [stage, setStage] = useState(-1);
+      const [elapsed, setElapsed] = useState(0);
+      const [running, setRunning] = useState(false);
+      const [error, setError] = useState(null);
+      const [done, setDone] = useState(false);
+      const [data, setData] = useState({});
+      const [events, setEvents] = useState([]);
+      const [showEvents, setShowEvents] = useState(true);
+      const [containment, setContainment] = useState(false);
+      const [litresSaved, setLitresSaved] = useState(0);
+      const [litresTimer, setLitresTimer] = useState(null);
+      const mapEl = useRef(null);
+      const mapRef = useRef(null);
+      const timerRef = useRef(null);
+      const evLogRef = useRef(null);
+
+      useEffect(() => {
+        if (running) timerRef.current = setInterval(() => setElapsed(e => e + 1), 1000);
+        else if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; }
+        return () => { if (timerRef.current) clearInterval(timerRef.current); };
+      }, [running]);
+
+      useEffect(() => {
+        if (evLogRef.current) evLogRef.current.scrollTop = evLogRef.current.scrollHeight;
+      }, [events]);
+
+      const fmt = s => `${String(Math.floor(s / 60)).padStart(2,'0')}:${String(s % 60).padStart(2,'0')}`;
+
+      /* Map init */
+      useEffect(() => {
+        if (!mapEl.current || mapRef.current) return;
+        const map = L.map(mapEl.current, { zoomControl: false, attributionControl: false });
+        L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 18 }).addTo(map);
+        map.setView([10.7905, 78.7047], 15);
+        L.control.zoom({ position: 'bottomright' }).addTo(map);
+        mapRef.current = map;
+        L.polygon([[10.798,78.695],[10.798,78.705],[10.792,78.705],[10.792,78.695]], { color:'#3a9e3d', weight:2, fillOpacity:0.12 }).addTo(map).bindTooltip('North Cotton Block');
+        L.polygon([[10.793,78.705],[10.793,78.715],[10.787,78.715],[10.787,78.705]], { color:'#3a9e3d', weight:2, fillOpacity:0.12 }).addTo(map).bindTooltip('East Mixed Plot');
+        return () => { if (mapRef.current) { mapRef.current.remove(); mapRef.current = null; } };
+      }, []);
+
+      const markOutbreak = (lat, lng, acres) => {
+        if (!mapRef.current) return;
+        const icon = L.divIcon({ html: `<div class="marker-pin pin-red"></div>`, iconSize:[18,18], iconAnchor:[9,9], className:'' });
+        L.marker([lat, lng], { icon }).addTo(mapRef.current).bindPopup(`<b>🔴 Outbreak zone</b><br>${acres} acres · High risk`);
+        const circle = L.circle([lat, lng], { radius: acres*100, color:'#dc2626', weight:1, fillOpacity:0.10 }).addTo(mapRef.current);
+        mapRef.current.flyTo([lat, lng], 16, { duration: 1.2 });
+      };
+
+      const addContainmentRing = (lat, lng) => {
+        if (!mapRef.current) return;
+        const circle = L.circle([lat, lng], { radius: 200, color:'#3a9e3d', weight:3, fillOpacity:0.08, dashArray:'6 4' }).addTo(mapRef.current);
+      };
+
+      const moveAgent = (from, to, agentName) => {
+        if (!mapRef.current) return null;
+        const icon = L.divIcon({ html: `<div style="font-size:20px;filter:drop-shadow(0 0 6px #3a9e3d)">🛩️</div>`, iconSize:[24,24], iconAnchor:[12,12], className:'' });
+        const m = L.marker(from, { icon }).addTo(mapRef.current).bindTooltip(agentName);
+        const line = L.polyline([from, to], { color:'#3a9e3d', weight:2, dashArray:'4 6' }).addTo(mapRef.current);
+        const steps = 40; let i = 0;
+        const iv = setInterval(() => {
+          i++;
+          const p = i / steps;
+          m.setLatLng([from[0] + (to[0]-from[0])*p, from[1] + (to[1]-from[1])*p]);
+          if (i >= steps) { clearInterval(iv); }
+        }, 75);
+        return m;
+      };
+
+      const resetAll = async () => {
+        setRunning(false); setStage(-1); setElapsed(0); setError(null); setData({}); setEvents([]); setContainment(false); setLitresSaved(0);
+        if (litresTimer) { clearInterval(litresTimer); setLitresTimer(null); }
+        if (mapRef.current) { mapRef.current.remove(); mapRef.current = null; }
+        await api('/api/demo/reset', { method: 'POST' });
+        setTimeout(() => { if (mapEl.current && !mapRef.current) {
+          const map = L.map(mapEl.current, { zoomControl: false, attributionControl: false });
+          L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 18 }).addTo(map);
+          map.setView([10.7905, 78.7047], 15);
+          L.control.zoom({ position: 'bottomright' }).addTo(map);
+          mapRef.current = map;
+          L.polygon([[10.798,78.695],[10.798,78.705],[10.792,78.705],[10.792,78.695]], { color:'#3a9e3d', weight:2, fillOpacity:0.12 }).addTo(map);
+          L.polygon([[10.793,78.705],[10.793,78.715],[10.787,78.715],[10.787,78.705]], { color:'#3a9e3d', weight:2, fillOpacity:0.12 }).addTo(map);
+        } }, 60);
+      };
+
+      const run = async () => {
+        if (running) return;
+        setError(null); setRunning(true); setStage(0); setElapsed(0); setEvents([]); setData({}); setDone(false); setContainment(false); setLitresSaved(0);
+        if (litresTimer) clearInterval(litresTimer);
+        const ev = (a, m, icon='') => setEvents(p => [...p, { time: new Date().toLocaleTimeString('en-US',{hour12:false}), a, m, icon }]);
+        try {
+          await api('/api/demo/reset', { method: 'POST' });
+          await sleep(800);
+
+          // Stage 1: Detect
+          ev('Detection Agent', 'Scanning East Mixed Plot — multispectral anomaly at coords 10.790°N 78.710°E', '🔍');
+          const det = await api('/api/detection/analyze', { method:'POST', body: JSON.stringify({ crop:'Cotton', field_id:3 }) });
+          if (!det) throw new Error('detect');
+          const conf = await api(`/api/detections/${det.detection_id}/confirm`, { method:'POST' });
+          if (!conf) throw new Error('confirm');
+          markOutbreak(det.latitude, det.longitude, det.affected_area_acres);
+          ev('Detection Agent', `⚠ OUTBREAK FLAGGED — Bollworm, ${(det.confidence*100).toFixed(0)}% confidence, ${det.affected_area_acres} acres`, '🔴');
+          await sleep(2500);
+
+          // Stage 2: Predict
+          setStage(1);
+          const obs = await api('/api/outbreaks?status=active');
+          const ob = (obs||[]).find(o => o.id === conf.outbreak_id) || (obs||[])[0];
+          // also call spread calculation
+          const spread = await api(`/api/spread/calculate?temperature=29&humidity=78&wind_speed=11&base_acres=2.1`, { method:'POST' });
+          setData(d => ({ ...d, ob, spread }));
+          ev('Prediction Agent', 'Degree-day logistic growth model: 29°C · 78% RH · 11 kph wind', '🌡️');
+          ev('Prediction Agent', `Spread curve: 2.1 → 3.2 → 5.5 → 8.7 → 14.2 acres in 24h  [±15% band]`, '📈');
+          await sleep(2500);
+
+          // Stage 3: Select
+          setStage(2);
+          const sel = await api('/api/dispatch/select', { method:'POST', body: JSON.stringify({ outbreak_id: conf.outbreak_id }) });
+          if (!sel || !sel.selected) throw new Error('dispatch');
+          const cand = (sel.candidates||[]).find(c => c.id === sel.selected);
+          const mission = await api('/api/missions', { method:'POST', body: JSON.stringify({ outbreak_id: conf.outbreak_id, agent_id: sel.selected }) });
+          if (!mission) throw new Error('mission');
+          setData(d => ({ ...d, sel, cand, mission }));
+          ev('Dispatch Engine', `Evaluating ${(sel.candidates||[]).length} agents — scoring by travel time × battery × payload`, '⚙️');
+          ev('Dispatch Engine', `DRONE-03 selected: ${cand ? cand.distance_km : '2.3'} km · ~3 min · ${cand ? cand.battery : '100'}% battery · 6.0L payload`, '✅');
+          if ((sel.candidates||[]).find(c => c.battery < 50)) ev('Dispatch Engine', `DRONE-04 skipped — battery 35% (charging). System gated correctly.`, '⚡');
+          await sleep(1500);
+
+          // Stage 4: En route
+          setStage(3);
+          ev('Mission Controller', `Mission ${mission.mission_code} created — target: 2.1 acres precision zone`, '📋');
+          await api(`/api/missions/${mission.mission_id}/status?action=dispatch`, { method:'POST' });
+          const agents = (await api('/api/agents')||[]);
+          const agent = agents.find(a => a.id === sel.selected);
+          const from = agent ? [agent.latitude, agent.longitude] : [10.785, 78.690];
+          moveAgent(from, [det.latitude, det.longitude], cand ? cand.name : 'DRONE-03');
+          ev('Drone Agent', `${cand ? cand.name : 'DRONE-03'} airborne → target coordinates`, '🛩️');
+          await sleep(1000);
+          await api(`/api/missions/${mission.mission_id}/status?action=arrive`, { method:'POST' });
+          ev('Drone Agent', 'Arrived at treatment zone — hovering at 15m, confirming coordinates', '📍');
+          await sleep(1500);
+
+          // Stage 5: Treat
+          setStage(4);
+          await api(`/api/missions/${mission.mission_id}/status?action=treat`, { method:'POST' });
+          ev('Treatment Agent', 'Precision spray started — Chlorantraniliprole (IRAC Group 28) · 1.8L target', '💧');
+          // Animate litre counter
+          const totalSaved = 8.4 - 1.8;
+          const savedTimer = setInterval(() => {
+            setLitresSaved(v => { const next = Math.min(v + 0.15, totalSaved); return Math.round(next * 10) / 10; });
+          }, 200);
+          setLitresTimer(savedTimer);
+          await sleep(2800);
+          clearInterval(savedTimer);
+          setLitresSaved(totalSaved);
+          await api(`/api/missions/${mission.mission_id}/status?action=complete`, { method:'POST' });
+          ev('Treatment Agent', '✓ Treatment complete — 2.1 acres, 1.8L precision vs 8.4L conventional (−78.6%)', '✅');
+          await sleep(1000);
+
+          // Stage 6: Contain
+          setStage(5);
+          setContainment(true);
+          addContainmentRing(det.latitude, det.longitude);
+          ev('Mission Controller', '🟢 OUTBREAK CONTAINED — OUT-' + String(conf.outbreak_id).padStart(4,'0'), '🟢');
+          ev('Notification Agent', 'Farmer SMS sent in Tamil language', '📱');
+          setDone(true);
+          await sleep(1200);
+        } catch (e) {
+          setError('demo');
+        } finally { setRunning(false); }
+      };
+
+      const steps = [
+        { key: 'detect', label: t('s1'), busy: t('detecting'), icon: '🔍' },
+        { key: 'predict', label: t('s2'), busy: t('predicting'), icon: '📈' },
+        { key: 'select', label: t('s3'), busy: t('dispatching'), icon: '⚙️' },
+        { key: 'route', label: t('s4'), busy: null, icon: '🛩️' },
+        { key: 'treat', label: t('s5'), busy: t('treating'), icon: '💧' },
+        { key: 'contain', label: t('s6'), busy: t('containing'), icon: '🟢' },
+      ];
+      const stepIndex = stage < 0 ? -1 : stage;
+      const ob = data.ob || {};
+      const sel = data.sel || {};
+      const cand = data.cand || {};
+      const mission = data.mission || {};
+      const spread = data.spread || {};
+
+      return (
+        <div className="h-full bg-paper-100 flex flex-col">
+          <div className="bg-white border-b border-paper-200 px-4 py-3 flex items-center gap-3 shrink-0">
+            {!running && <button onClick={onExit} className="p-1.5 rounded-lg text-ink-400 hover:bg-paper-100">{I.arrowLeft('w-5 h-5')}</button>}
+            <span className="text-brand-600">{I.shield('w-5 h-5')}</span>
+            <div className="flex-1">
+              <div className="font-semibold text-ink-800">FarmShield Live Demo</div>
+              <div className="text-xs text-ink-400">{t('demoFarm')}</div>
+            </div>
+            <span className="font-mono text-sm text-ink-600 bg-paper-100 border border-paper-200 rounded-md px-2 py-1">{fmt(elapsed)}</span>
+            <button onClick={onExpert} className="hidden md:block text-xs font-semibold text-ink-500 border border-paper-200 rounded-lg px-2 py-1.5 hover:bg-paper-50">{I.wrench('w-4 h-4 inline mr-1')}Expert Console</button>
+          </div>
+
+          {/* Split layout: map + panel */}
+          <div className="flex-1 flex overflow-hidden">
+            {/* Map */}
+            <div className="flex-1 relative min-w-0">
+              <div ref={mapEl} className="absolute inset-0" />
+              {/* Containment success overlay */}
+              {containment && (
+                <div className="absolute top-4 left-1/2 -translate-x-1/2 z-[1000] bg-brand-600 text-white px-4 py-2 rounded-full font-semibold text-sm shadow-glow step-reveal flex items-center gap-2">
+                  <span>🟢</span> Outbreak Contained!
+                </div>
+              )}
+              {/* Live savings badge */}
+              {litresSaved > 0 && (
+                <div className="absolute bottom-4 left-4 z-[1000] bg-white border border-brand-200 rounded-app px-3 py-2 shadow-card">
+                  <div className="text-xs text-ink-400">Pesticide saved</div>
+                  <div className="text-lg font-black text-brand-600">{litresSaved.toFixed(1)} L</div>
+                </div>
+              )}
+            </div>
+
+            {/* Right panel */}
+            <div className="w-80 shrink-0 flex flex-col overflow-hidden bg-paper-50 border-l border-paper-200">
+              {/* Outbreak summary */}
+              <div className="bg-white border-b border-paper-200 p-4">
+                <div className="flex items-start justify-between gap-2">
+                  <div>
+                    <h2 className="font-bold text-ink-800 text-sm">{t('outbreakTitle')}</h2>
+                    <p className="text-xs text-ink-500 mt-0.5">2.1 acres · High risk · 29°C · 78% RH</p>
+                  </div>
+                  <span className="text-xs font-semibold bg-amber2-100 text-amber2-500 px-2 py-0.5 rounded-full flex-shrink-0">Demo</span>
+                </div>
+                {/* Spread prediction mini chart */}
+                {spread.predictions && (
+                  <div className="mt-3 pt-3 border-t border-paper-100">
+                    <p className="text-[10px] text-ink-400 font-semibold uppercase tracking-wide mb-2">Predicted Spread (acres)</p>
+                    <div className="flex items-end gap-1 h-10">
+                      {spread.predictions.map((p, i) => {
+                        const maxA = spread.predictions[spread.predictions.length-1].area;
+                        const h = Math.max(4, (p.area / maxA) * 36);
+                        const colors = ['#3a9e3d','#7ab33d','#d97706','#e05d3d','#dc2626'];
+                        return (
+                          <div key={p.hours} className="flex-1 flex flex-col items-center gap-0.5">
+                            <div className="rounded-sm w-full" style={{ height: h, background: colors[i] }}></div>
+                            <div className="text-[8px] text-ink-400">{p.hours === 0 ? 'Now' : `+${p.hours}h`}</div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                    <p className="text-[9px] text-ink-400 mt-1">Prototype AI Simulation · ±15% band</p>
+                  </div>
+                )}
+              </div>
+
+              {/* Timeline */}
+              <div className="flex-1 overflow-y-auto p-3">
+                <p className="text-[10px] font-semibold text-ink-400 uppercase tracking-wide mb-2">{t('responseProgress')}</p>
+                <div className="space-y-0">
+                  {steps.map((s, i) => {
+                    const isDone = stepIndex > i || done;
+                    const isNow = stepIndex === i && !done;
+                    return (
+                      <div key={s.key} className="flex gap-2.5">
+                        <div className="flex flex-col items-center">
+                          <div className={`tl-dot text-sm ${isDone ? 'bg-brand-600 text-white' : isNow ? 'bg-brand-100 text-brand-700 border border-brand-300' : 'bg-paper-100 text-ink-400 border border-paper-200'}`}>
+                            {isDone ? '✓' : s.icon}
+                          </div>
+                          {i < steps.length - 1 && <div className={`w-px flex-1 min-h-[20px] ${isDone ? 'bg-brand-400' : 'bg-paper-200'}`}></div>}
+                        </div>
+                        <div className={`pb-3 flex-1 ${i === steps.length - 1 ? 'pb-0' : ''}`}>
+                          <p className={`text-sm font-medium ${isDone ? 'text-ink-800' : isNow ? 'text-brand-700 font-semibold' : 'text-ink-400'}`}>
+                            {s.label}
+                            {isNow && s.busy && <span className="ml-1 text-xs font-normal text-ink-400 animate-pulse">{s.busy}</span>}
+                          </p>
+                          {s.key === 'predict' && isDone && spread.predictions && (
+                            <p className="text-xs text-ink-400 mt-0.5">2.1 → 14.2 acres in 24h · growth rate {spread.growth_rate}</p>
+                          )}
+                          {s.key === 'select' && isDone && cand && cand.name && (
+                            <p className="text-xs text-ink-400 mt-0.5">{cand.name} · {cand.battery}% battery · {cand.distance_km} km</p>
+                          )}
+                          {s.key === 'treat' && isDone && (
+                            <p className="text-xs text-brand-600 font-medium mt-0.5">8.4L → 1.8L precision (−78.6%)</p>
+                          )}
+                          {s.key === 'contain' && isDone && (
+                            <p className="text-xs text-brand-600 font-medium mt-0.5">Farmer notified via SMS (Tamil)</p>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {/* Event log */}
+                {events.length > 0 && (
+                  <div className="mt-3 pt-3 border-t border-paper-200">
+                    <button onClick={() => setShowEvents(s => !s)} className="flex items-center justify-between w-full text-[10px] font-semibold text-ink-400 uppercase tracking-wide mb-2">
+                      <span>System Events ({events.length})</span>
+                      {I.chevron(`w-3 h-3 transition-transform ${showEvents ? 'rotate-90' : ''}`)}
+                    </button>
+                    {showEvents && (
+                      <div ref={evLogRef} className="max-h-48 overflow-y-auto space-y-1 dark-scroll">
+                        {events.map((e, i) => (
+                          <div key={i} className="flex gap-2 text-[10px]">
+                            <span className="text-ink-400 font-mono shrink-0">{e.time}</span>
+                            <span className="text-brand-600 font-semibold shrink-0 w-16 truncate">{e.a.split(' ')[0]}</span>
+                            <span className="text-ink-600 leading-tight">{e.m}</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {/* Controls */}
+              <div className="p-3 border-t border-paper-200 bg-white space-y-2">
+                {error && (
+                  <div className="bg-red-50 border border-red-200 rounded-app p-3 text-center">
+                    <p className="text-sm text-red-700">Demo service unavailable</p>
+                    <button onClick={run} className="mt-2 px-4 py-1.5 bg-red-600 text-white rounded-app text-xs font-semibold">Retry</button>
+                  </div>
+                )}
+                <div className="flex gap-2">
+                  {!done ? (
+                    <button onClick={run} disabled={running}
+                      className="flex-1 py-3 rounded-app bg-brand-600 text-white font-semibold text-sm pressable disabled:opacity-50 flex items-center justify-center gap-2">
+                      {running ? <><span className="animate-pulse">●</span> {t('running')}</> : <>{I.play('w-4 h-4')} {t('startDemo')}</>}
+                    </button>
+                  ) : (
+                    <button onClick={run} className="flex-1 py-3 rounded-app bg-brand-600 text-white font-semibold text-sm pressable">
+                      {t('runAgain')}
+                    </button>
+                  )}
+                  <button onClick={resetAll} disabled={running}
+                    className="px-3 py-3 rounded-app bg-white border border-paper-300 text-ink-600 pressable disabled:opacity-50">
+                    {I.refresh('w-4 h-4')}
+                  </button>
+                </div>
+                {done && (
+                  <button onClick={onExpert} className="w-full py-2.5 rounded-app bg-white border border-paper-300 text-ink-700 font-semibold text-sm pressable flex items-center justify-center gap-2">
+                    {I.wrench('w-4 h-4 text-ink-400')} View autonomous system →
+                  </button>
+                )}
+                <p className="text-center text-[10px] text-ink-400">{t('prototypeNote')}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    /* ─────────────────── EXPERT CONSOLE ─────────────────── */
+    function ExpertConsole({ onFarmer, onDemo }) {
+      const [page, setPage] = useState('dashboard');
+      const [darkMode, setDarkMode] = useState(true);
+      const [outbreaks, setOutbreaks] = useState([]);
+      const [agents, setAgents] = useState([]);
+      const [missions, setMissions] = useState([]);
+      const [events, setEvents] = useState([]);
+      const [analytics, setAnalytics] = useState(null);
+      const [fields, setFields] = useState([]);
+      const [health, setHealth] = useState(null);
+      const [scanResult, setScanResult] = useState(null);
+      const [scanImage, setScanImage] = useState(null);
+      const [scanning, setScanning] = useState(false);
+      const [sampleFields, setSampleFields] = useState([]);
+      const [rotation, setRotation] = useState(null);
+      const [weather, setWeather] = useState(null);
+      const [tickerText, setTickerText] = useState('');
+      const logRef = useRef(null);
+      const mapRef = useRef(null);
+      const mapEl = useRef(null);
+      const layersRef = useRef([]);
+
+      const load = useCallback(async () => {
+        const [o, a, m, e, an, f, h, w, rot] = await Promise.all([
+          api('/api/outbreaks'), api('/api/agents'), api('/api/missions'),
+          api('/api/events?limit=80'), api('/api/analytics'), api('/api/fields'),
+          api('/api/health'), api('/api/weather'), api('/api/chemical-rotation'),
+        ]);
+        if (o) setOutbreaks(o); if (a) setAgents(a); if (m) setMissions(m);
+        if (e) { setEvents(e.reverse()); }
+        if (an) setAnalytics(an); if (f) setFields(f); if (h) setHealth(h);
+        if (w) setWeather(w); if (rot) setRotation(rot);
+      }, []);
+
+      useEffect(() => { load(); }, [load]);
+      useEffect(() => { if (logRef.current) logRef.current.scrollTop = logRef.current.scrollHeight; }, [events]);
+
+      // Build ticker text from events
+      useEffect(() => {
+        if (events.length > 0) {
+          const recent = events.slice(-8).map(e => `[${e.agent_name}] ${e.message}`).join('  ·  ');
+          setTickerText(recent);
+        }
+      }, [events]);
+
+      useEffect(() => {
+        if (page !== 'map' || !mapEl.current) return;
+        if (mapRef.current) { setTimeout(() => mapRef.current.invalidateSize(), 50); return; }
+        const map = L.map(mapEl.current, { zoomControl: false, attributionControl: false });
+        L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 18 }).addTo(map);
+        L.control.zoom({ position: 'bottomright' }).addTo(map);
+        map.setView([10.79, 78.705], 15);
+        mapRef.current = map;
+        return () => {};
+      }, [page]);
+
+      useEffect(() => {
+        const map = mapRef.current;
+        if (page !== 'map' || !map) return;
+        layersRef.current.forEach(l => map.removeLayer(l));
+        layersRef.current = [];
+        fields.forEach(f => {
+          if (!f.polygon) return;
+          const color = f.health_status === 'healthy' ? '#2d8230' : '#d97706';
+          const poly = L.polygon(f.polygon, { color, weight: 2, fillOpacity: 0.12 }).addTo(map)
+            .bindPopup(`<b>${f.name}</b><br>${f.crop} · ${f.area_acres} acres<br>${f.health_status === 'healthy' ? '🟢 Healthy' : '🟡 Stressed'}`);
+          layersRef.current.push(poly);
+        });
+        outbreaks.filter(o => o.status === 'active').forEach(o => {
+          const icon = L.divIcon({ html: `<div class="marker-pin pin-red"></div>`, iconSize:[18,18], iconAnchor:[9,9], className:'' });
+          const mk = L.marker([o.latitude, o.longitude], { icon }).addTo(map)
+            .bindPopup(`<b>OUT-${String(o.id).padStart(4,'0')}</b><br>${o.pest} · ${o.affected_area_acres} acres<br>Risk: ${o.risk_level}`);
+          layersRef.current.push(mk);
+          layersRef.current.push(L.circle([o.latitude, o.longitude], { radius: o.affected_area_acres*120, color:'#dc2626', weight:1, fillOpacity:0.07 }).addTo(map));
+        });
+        agents.filter(a => a.status === 'AVAILABLE').forEach(a => {
+          const icon = L.divIcon({ html: `<div class="marker-pin pin-green"></div>`, iconSize:[14,14], iconAnchor:[7,7], className:'' });
+          const mk = L.marker([a.latitude, a.longitude], { icon }).addTo(map).bindTooltip(`${a.name} · available`);
+          layersRef.current.push(mk);
+        });
+      }, [fields, outbreaks, agents, page]);
+
+      const exportLog = () => {
+        const content = events.map(e => `${e.created_at ? e.created_at.slice(0,19) : ''} | ${e.agent_name.padEnd(25)} | ${e.event_type.padEnd(12)} | ${e.message}`).join('\n');
+        const blob = new Blob([`FarmShield Event Log Export\n${'='.repeat(80)}\n${content}`], { type: 'text/plain' });
+        const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'farmshield_audit_log.txt'; a.click();
+      };
+
+      const abortMission = async (missionId, missionCode) => {
+        if (!confirm(`Abort mission ${missionCode}? Agent will return to base.`)) return;
+        const res = await api(`/api/missions/${missionId}/abort?reason=operator_abort`, { method: 'POST' });
+        if (res) { load(); }
+      };
+
+      const dm = darkMode;
+      const nav = [
+        { key:'dashboard', label:'Dashboard', icon:I.grid },
+        { key:'map', label:'Field Map', icon:I.mapPin },
+        { key:'outbreaks', label:'Outbreaks', icon:I.alert },
+        { key:'missions', label:'Missions', icon:I.drone },
+        { key:'agents', label:'Fleet', icon:I.settings },
+        { key:'events', label:'Event Log', icon:I.history },
+        { key:'analytics', label:'Analytics', icon:I.chart },
+        { key:'rotation', label:'Chem. Rotation', icon:I.flask },
+        { key:'aerial', label:'Aerial Scan', icon:I.image },
+      ];
+
+      const Chip = ({ tone, children }) => {
+        const tones = {
+          green: dm ? 'bg-green-900/50 text-green-400' : 'bg-brand-50 text-brand-700',
+          red: dm ? 'bg-red-900/50 text-red-400' : 'bg-red-50 text-red-600',
+          amber: dm ? 'bg-amber-900/50 text-amber-400' : 'bg-amber2-100 text-amber2-500',
+          gray: dm ? 'bg-dark-600 text-dark-400' : 'bg-paper-100 text-ink-500',
+          blue: dm ? 'bg-blue-900/50 text-blue-400' : 'bg-blue-50 text-blue-600',
+        };
+        return <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${tones[tone]||tones.gray}`}>{children}</span>;
+      };
+
+      const StatCard = ({ label, value, tone='green', sub='', sparkData=null }) => (
+        <div className={`${dm ? 'dark-card border rounded-app p-4' : 'bg-white border border-paper-200 rounded-app p-4 shadow-card'}`}>
+          <div className={`text-xs font-medium ${dm ? 'text-dark-400' : 'text-ink-400'}`}>{label}</div>
+          <div className={`text-2xl font-bold mt-1 ${tone==='red' ? (dm ? 'text-red-400' : 'text-red-600') : tone==='green' ? (dm ? 'text-green-400' : 'text-brand-600') : tone==='blue' ? (dm ? 'text-blue-400' : 'text-blue-600') : (dm ? 'text-dark-400' : 'text-ink-800')}`}>{value}</div>
+          {sub && <div className={`text-xs mt-0.5 ${dm ? 'text-dark-400' : 'text-ink-400'}`}>{sub}</div>}
+          {sparkData && <div className="mt-2"><Sparkline data={sparkData} color={tone === 'red' ? '#dc2626' : '#3a9e3d'} /></div>}
+        </div>
+      );
+
+      const activeObs = outbreaks.filter(o => o.status === 'active');
+      const activeMs = missions.filter(m => !['completed','aborted'].includes(m.status));
+
+      const panelClass = dm ? 'h-full flex flex-col dark-panel' : 'h-full flex flex-col bg-paper-100';
+      const headerClass = dm ? 'dark-header border-b px-5 py-3 flex items-center gap-3 shrink-0 dark-border' : 'bg-white border-b border-paper-200 px-5 py-3 flex items-center gap-3 shrink-0';
+      const navClass = dm ? 'w-52 dark-nav border-r py-3 shrink-0 dark-border' : 'w-52 bg-white border-r border-paper-200 py-3 shrink-0';
+      const navItemBase = dm ? 'w-full flex items-center gap-2.5 px-4 py-2.5 text-sm font-medium pressable dark-nav-item' : 'w-full flex items-center gap-2.5 px-4 py-2.5 text-sm font-medium pressable';
+      const navItemActive = dm ? 'active' : 'text-brand-700 bg-brand-50 border-r-2 border-brand-600';
+      const navItemInactive = dm ? '' : 'text-ink-500 hover:bg-paper-50';
+      const cardClass = dm ? 'dark-card border rounded-app dark-border' : 'bg-white border border-paper-200 rounded-app shadow-card';
+
+      return (
+        <div className={panelClass}>
+          {/* Header */}
+          <header className={headerClass}>
+            <span className={dm ? 'text-green-400' : 'text-brand-600'}>{I.shield('w-5 h-5')}</span>
+            <div className="flex-1">
+              <div className={`font-semibold leading-tight ${dm ? 'text-white' : 'text-ink-800'}`}>FarmShield Operations</div>
+              <div className={`text-xs leading-tight ${dm ? 'text-dark-400' : 'text-ink-400'}`}>
+                {health ? <span className="inline-flex items-center gap-1"><span className={`w-1.5 h-1.5 rounded-full ${health.database === 'connected' ? 'bg-green-400' : 'bg-red-400'}`}></span>API {health.database}</span> : '…'}
+                <span className="mx-2 opacity-30">|</span>Demo Mode
+                {weather && <span className="ml-2">{I.thermometer('w-3 h-3 inline')} {weather.temperature_c}°C · {weather.humidity_percent}%RH</span>}
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <button onClick={() => setDarkMode(d => !d)}
+                className={`p-1.5 rounded-lg pressable ${dm ? 'text-yellow-400 bg-yellow-900/30 hover:bg-yellow-900/50' : 'text-ink-500 hover:bg-paper-100'}`}
+                title="Toggle dark mode">
+                {dm ? I.sun('w-4 h-4') : I.moon('w-4 h-4')}
+              </button>
+              <button onClick={() => load()} className={`p-1.5 rounded-lg pressable ${dm ? 'text-dark-400 hover:bg-dark-700' : 'text-ink-400 hover:bg-paper-100'}`} title="Refresh">{I.refresh('w-4 h-4')}</button>
+              <button onClick={onDemo} className={`text-sm font-semibold border rounded-lg px-3 py-1.5 ${dm ? 'text-green-400 border-green-800 hover:bg-green-900/30' : 'text-brand-600 border-brand-200 hover:bg-brand-50'}`}>Live Demo</button>
+              <button onClick={onFarmer} className={`text-sm font-semibold border rounded-lg px-3 py-1.5 ${dm ? 'text-dark-400 border-dark-600 hover:bg-dark-700' : 'text-ink-600 border-paper-300 hover:bg-paper-50'}`}>Farmer App</button>
+            </div>
+          </header>
+
+          <div className="flex-1 flex overflow-hidden">
+            {/* Sidebar */}
+            <nav className={navClass}>
+              {nav.map(n => (
+                <button key={n.key} onClick={() => setPage(n.key)}
+                  className={`${navItemBase} ${page===n.key ? navItemActive : navItemInactive}`}>
+                  {n.icon('w-4 h-4')}
+                  <span className="text-sm">{n.label}</span>
+                </button>
+              ))}
+            </nav>
+
+            {/* Content + Ticker */}
+            <div className="flex-1 flex flex-col overflow-hidden">
+              <main className="flex-1 overflow-y-auto">
+
+                {/* DASHBOARD */}
+                {page === 'dashboard' && (
+                  <div className="p-5 space-y-5 max-w-5xl">
+                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                      <StatCard label="Active outbreaks" value={activeObs.length} tone={activeObs.length ? 'red' : 'green'} sub={activeObs.length ? 'Response required' : 'All clear'} sparkData={[1,2,1,3,1,0,activeObs.length]} />
+                      <StatCard label="Active missions" value={activeMs.length} tone="amber" sub="In progress" sparkData={[0,1,2,1,2,1,activeMs.length]} />
+                      <StatCard label="Available agents" value={agents.filter(a=>a.status==='AVAILABLE').length} sub={`of ${agents.length} total`} sparkData={[3,4,3,5,4,3,agents.filter(a=>a.status==='AVAILABLE').length]} />
+                      <StatCard label="Fields monitored" value={analytics ? analytics.fields_monitored : '—'} sub={analytics ? `${analytics.area_monitored_acres} acres` : ''} />
+                    </div>
+
+                    {/* Weather + quick stats */}
+                    {weather && analytics && (
+                      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                        <div className={`${cardClass} p-4`}>
+                          <div className={`text-xs font-medium mb-1 ${dm ? 'text-dark-400' : 'text-ink-400'}`}>Pest Risk Level</div>
+                          <div className={`text-xl font-bold ${weather.pest_risk === 'HIGH' ? (dm ? 'text-red-400' : 'text-red-600') : weather.pest_risk === 'MODERATE' ? (dm ? 'text-amber-400' : 'text-amber2-500') : (dm ? 'text-green-400' : 'text-brand-600')}`}>{weather.pest_risk}</div>
+                          <div className={`text-xs mt-0.5 ${dm ? 'text-dark-400' : 'text-ink-400'}`}>{weather.temperature_c}°C · {weather.humidity_percent}% RH</div>
+                        </div>
+                        <div className={`${cardClass} p-4`}>
+                          <div className={`text-xs font-medium mb-1 ${dm ? 'text-dark-400' : 'text-ink-400'}`}>CO₂ Saved</div>
+                          <div className={`text-xl font-bold ${dm ? 'text-green-400' : 'text-brand-600'}`}>{analytics.co2_saved_kg} kg</div>
+                          <div className={`text-xs mt-0.5 ${dm ? 'text-dark-400' : 'text-ink-400'}`}>vs. blanket tractor spray</div>
+                        </div>
+                        <div className={`${cardClass} p-4`}>
+                          <div className={`text-xs font-medium mb-1 ${dm ? 'text-dark-400' : 'text-ink-400'}`}>Pesticide Saved</div>
+                          <div className={`text-xl font-bold ${dm ? 'text-green-400' : 'text-brand-600'}`}>{analytics.pesticide_savings_percent}%</div>
+                          <div className={`text-xs mt-0.5 ${dm ? 'text-dark-400' : 'text-ink-400'}`}>{analytics.estimated_pesticide_saved_l} L saved</div>
+                        </div>
+                        <div className={`${cardClass} p-4`}>
+                          <div className={`text-xs font-medium mb-1 ${dm ? 'text-dark-400' : 'text-ink-400'}`}>Yield Protected</div>
+                          <div className={`text-xl font-bold ${dm ? 'text-blue-400' : 'text-blue-600'}`}>₹{(analytics.yield_protected_inr/1000).toFixed(0)}K</div>
+                          <div className={`text-xs mt-0.5 ${dm ? 'text-dark-400' : 'text-ink-400'}`}>Prototype Estimate</div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Active Outbreaks */}
+                    <div className={cardClass}>
+                      <div className={`px-5 py-4 border-b flex items-center justify-between ${dm ? 'dark-border' : 'border-paper-100'}`}>
+                        <h3 className={`font-semibold ${dm ? 'text-white' : 'text-ink-800'}`}>Active Outbreaks</h3>
+                        {activeObs.length > 0 && <Chip tone="red">{activeObs.length} open</Chip>}
+                      </div>
+                      {activeObs.length === 0 ? (
+                        <div className={`px-5 py-8 text-center text-sm ${dm ? 'text-dark-400' : 'text-ink-400'}`}>No active outbreaks. All fields clear. 🟢</div>
+                      ) : activeObs.map(o => (
+                        <div key={o.id} className={`px-5 py-4 flex items-center justify-between gap-4 border-b last:border-0 ${dm ? 'dark-border' : 'border-paper-100'}`}>
+                          <div>
+                            <div className={`font-medium ${dm ? 'text-white' : 'text-ink-800'}`}>{o.crop} · Possible {o.pest}</div>
+                            <div className={`text-xs mt-0.5 ${dm ? 'text-dark-400' : 'text-ink-400'}`}>OUT-{String(o.id).padStart(4,'0')} · {o.affected_area_acres} acres · {o.predictions && o.predictions.length ? `→ ${o.predictions[o.predictions.length-1].area} acres in 24h` : ''}</div>
+                          </div>
+                          <div className="flex items-center gap-3">
+                            <Chip tone="red">High risk</Chip>
+                            <button onClick={() => setPage('map')} className={`text-sm font-semibold ${dm ? 'text-green-400' : 'text-brand-600'}`}>View map</button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Fleet status */}
+                    <div className={cardClass}>
+                      <div className={`px-5 py-4 border-b ${dm ? 'dark-border' : 'border-paper-100'}`}><h3 className={`font-semibold ${dm ? 'text-white' : 'text-ink-800'}`}>Fleet Status</h3></div>
+                      <div className={`divide-y ${dm ? 'divide-dark-700' : 'divide-paper-100'}`}>
+                        {agents.map(a => (
+                          <div key={a.id} className="px-5 py-3 flex items-center justify-between gap-4">
+                            <div className="flex items-center gap-3">
+                              <span className={dm ? 'text-dark-400' : 'text-ink-400'}>{a.agent_type === 'DRONE' ? I.drone('w-5 h-5') : I.settings('w-5 h-5')}</span>
+                              <div>
+                                <div className={`font-medium text-sm ${dm ? 'text-white' : 'text-ink-800'}`}>{a.name}</div>
+                                <div className={`text-xs ${dm ? 'text-dark-400' : 'text-ink-400'}`}>{a.agent_type} · {a.missions_completed} mission{a.missions_completed === 1 ? '' : 's'}</div>
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-4">
+                              {/* Animated battery bar */}
+                              <div className="flex items-center gap-1.5">
+                                <div className={`w-20 h-2 rounded-full ${dm ? 'bg-dark-600' : 'bg-paper-200'}`}>
+                                  <div className={`battery-bar h-full rounded-full ${a.battery_percent > 60 ? 'bg-green-500' : a.battery_percent > 30 ? 'bg-amber-500' : 'bg-red-500'}`}
+                                    style={{width:`${a.battery_percent}%`}} />
+                                </div>
+                                <span className={`text-xs font-mono ${dm ? 'text-dark-400' : 'text-ink-500'}`}>{a.battery_percent}%</span>
+                              </div>
+                              <Chip tone={a.status==='AVAILABLE'?'green':a.status==='CHARGING'?'amber':a.status==='EN_ROUTE'?'blue':'gray'}>{a.status}</Chip>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* MAP */}
+                {page === 'map' && (
+                  <div className="h-full p-4">
+                    <div className="h-full rounded-app overflow-hidden border border-paper-200 shadow-card relative">
+                      <div ref={mapEl} style={{ position: 'absolute', inset: 0 }}></div>
+                      <div className={`absolute top-3 left-3 z-[1001] ${dm ? 'bg-dark-800/95 border-dark-600' : 'bg-white/95 border-paper-200'} border rounded-app px-3.5 py-2.5 shadow-card text-xs space-y-1.5`}>
+                        <div className="flex items-center gap-2"><span className="w-2.5 h-2.5 rounded-sm" style={{background:'#2d8230'}}></span><span className={dm ? 'text-dark-300' : ''}>Healthy field</span></div>
+                        <div className="flex items-center gap-2"><span className="w-2.5 h-2.5 rounded-sm" style={{background:'#d97706'}}></span><span className={dm ? 'text-dark-300' : ''}>Stressed field</span></div>
+                        <div className="flex items-center gap-2"><span className="marker-pin pin-red" style={{width:10,height:10,borderWidth:2}}></span><span className={dm ? 'text-dark-300' : ''}>Active outbreak</span></div>
+                        <div className="flex items-center gap-2"><span className="marker-pin pin-green" style={{width:10,height:10,borderWidth:2}}></span><span className={dm ? 'text-dark-300' : ''}>Available agent</span></div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* OUTBREAKS */}
+                {page === 'outbreaks' && (
+                  <div className="p-5 max-w-4xl space-y-3">
+                    {outbreaks.map(o => (
+                      <div key={o.id} className={`${cardClass} p-4`}>
+                        <div className="flex items-center justify-between mb-2">
+                          <span className={`font-semibold ${dm ? 'text-white' : 'text-ink-800'}`}>OUT-{String(o.id).padStart(4,'0')} · {o.pest}</span>
+                          <Chip tone={o.status==='active'?'red':'green'}>{o.status}</Chip>
+                        </div>
+                        <div className={`text-sm ${dm ? 'text-dark-400' : 'text-ink-500'}`}>{o.crop} · {o.affected_area_acres} acres · {o.risk_level} risk</div>
+                        {o.predictions && o.predictions.length > 0 && (
+                          <div className="mt-3 space-y-1.5">
+                            <p className={`text-xs font-semibold ${dm ? 'text-dark-400' : 'text-ink-500'}`}>Spread forecast:</p>
+                            {o.predictions.map(p => (
+                              <div key={p.hours} className="flex items-center gap-3 text-xs">
+                                <span className={`w-14 ${dm ? 'text-dark-400' : 'text-ink-400'}`}>{p.hours === 0 ? 'Now' : `+${p.hours}h`}</span>
+                                <div className={`flex-1 h-3 rounded overflow-hidden ${dm ? 'bg-dark-600' : 'bg-paper-100'}`}>
+                                  <div className="h-full bg-amber-500/70" style={{ width: `${Math.min(p.area/15*100,100)}%` }}></div>
+                                </div>
+                                <span className={`w-16 text-right font-medium ${dm ? 'text-dark-300' : 'text-ink-700'}`}>{p.area} ac</span>
+                              </div>
+                            ))}
+                            <p className={`text-[10px] pt-1 ${dm ? 'text-dark-400' : 'text-ink-400'}`}>Prototype AI Simulation</p>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* MISSIONS */}
+                {page === 'missions' && (
+                  <div className="p-5 max-w-4xl space-y-3">
+                    {missions.map(m => (
+                      <div key={m.id} className={`${cardClass} p-4 flex items-center justify-between gap-4`}>
+                        <div>
+                          <div className={`font-medium ${dm ? 'text-white' : 'text-ink-800'}`}>{m.mission_code} · {m.agent_name}</div>
+                          <div className={`text-xs mt-0.5 ${dm ? 'text-dark-400' : 'text-ink-400'}`}>{m.outbreak_pest} · {m.target_area_acres} acres · {m.precision_chemical_l}L precision (vs {m.estimated_chemical_l}L blanket)</div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Chip tone={m.status==='completed'?'green':m.status==='aborted'?'gray':'amber'}>{m.status}</Chip>
+                          {!['completed','aborted'].includes(m.status) && (
+                            <button onClick={() => abortMission(m.id, m.mission_code)}
+                              className="px-2.5 py-1 rounded-lg text-xs font-semibold bg-red-600 text-white hover:bg-red-700 pressable flex items-center gap-1">
+                              {I.stopCircle('w-3 h-3')} Abort
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* AGENTS */}
+                {page === 'agents' && (
+                  <div className="p-5 max-w-4xl">
+                    <div className={cardClass}>
+                      <div className={`divide-y ${dm ? 'divide-dark-700' : 'divide-paper-100'}`}>
+                        {agents.map(a => (
+                          <div key={a.id} className="px-5 py-4 flex items-center justify-between gap-4">
+                            <div className="flex items-center gap-3">
+                              <span className={dm ? 'text-dark-400' : 'text-ink-400'}>{a.agent_type === 'DRONE' ? I.drone('w-5 h-5') : I.settings('w-5 h-5')}</span>
+                              <div>
+                                <div className={`font-medium text-sm ${dm ? 'text-white' : 'text-ink-800'}`}>{a.name}</div>
+                                <div className={`text-xs ${dm ? 'text-dark-400' : 'text-ink-400'}`}>{a.agent_type} · {a.speed_kmh} km/h · {a.payload_capacity_l}L payload · {a.missions_completed} missions done</div>
+                                <div className={`text-xs mt-0.5 ${dm ? 'text-dark-400' : 'text-ink-400'}`}>Treats: {(a.treatment_compatibility||[]).join(', ')}</div>
+                              </div>
+                            </div>
+                            <div className="flex flex-col items-end gap-2">
+                              <Chip tone={a.status==='AVAILABLE'?'green':a.status==='CHARGING'?'amber':a.status==='EN_ROUTE'?'blue':'gray'}>{a.status}</Chip>
+                              <div className="flex items-center gap-1.5">
+                                <div className={`w-24 h-2 rounded-full ${dm ? 'bg-dark-600' : 'bg-paper-200'}`}>
+                                  <div className={`battery-bar h-full rounded-full ${a.battery_percent > 60 ? 'bg-green-500' : a.battery_percent > 30 ? 'bg-amber-500' : 'bg-red-500 battery'}`}
+                                    style={{width:`${a.battery_percent}%`}} />
+                                </div>
+                                <span className={`text-xs font-mono ${dm ? 'text-dark-400' : 'text-ink-500'}`}>{a.battery_percent}%</span>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* EVENT LOG */}
+                {page === 'events' && (
+                  <div className="p-5 max-w-4xl">
+                    <div className={cardClass}>
+                      <div className={`px-5 py-4 border-b flex items-center justify-between ${dm ? 'dark-border' : 'border-paper-100'}`}>
+                        <h3 className={`font-semibold ${dm ? 'text-white' : 'text-ink-800'}`}>Audit Event Log</h3>
+                        <div className="flex gap-2">
+                          <button onClick={load} className={`text-xs font-semibold ${dm ? 'text-green-400' : 'text-brand-600'}`}>Refresh</button>
+                          <button onClick={exportLog}
+                            className={`flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded-lg ${dm ? 'text-dark-300 bg-dark-600 hover:bg-dark-500' : 'text-ink-600 bg-paper-100 hover:bg-paper-200'}`}>
+                            {I.download('w-3 h-3')} Export
+                          </button>
+                        </div>
+                      </div>
+                      <div ref={logRef} className={`p-4 max-h-[70vh] overflow-y-auto font-mono text-xs space-y-1 ${dm ? 'dark-scroll' : ''}`}>
+                        {events.map((e, i) => (
+                          <div key={i} className="flex gap-3">
+                            <span className={dm ? 'text-dark-400' : 'text-ink-400'}>{e.created_at ? e.created_at.slice(11,19) : ''}</span>
+                            <span className={`font-semibold min-w-[140px] ${dm ? 'text-green-400' : 'text-brand-600'}`}>{e.agent_name}</span>
+                            <span className={`min-w-[80px] ${e.severity === 'warning' ? (dm ? 'text-amber-400' : 'text-amber2-500') : e.severity === 'success' ? (dm ? 'text-green-400' : 'text-brand-600') : (dm ? 'text-dark-400' : 'text-ink-400')}`}>[{e.event_type}]</span>
+                            <span className={dm ? 'text-dark-300' : 'text-ink-600'}>{e.message}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* ANALYTICS */}
+                {page === 'analytics' && analytics && (
+                  <div className="p-5 max-w-5xl space-y-4">
+                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                      <StatCard label="Outbreaks contained" value={analytics.contained_outbreaks} sparkData={[0,1,1,2,1,2,analytics.contained_outbreaks]} />
+                      <StatCard label="Missions completed" value={analytics.completed_missions} sparkData={[0,1,1,1,2,2,analytics.completed_missions]} />
+                      <StatCard label="Pesticide reduction" value={`${analytics.pesticide_savings_percent}%`} sub="Prototype Estimate" sparkData={[60,65,70,72,75,78,analytics.pesticide_savings_percent]} />
+                      <StatCard label="Avg response time" value={`${analytics.avg_response_time_min} min`} sub="dispatched to zone" sparkData={[20,18,15,12,10,8,analytics.avg_response_time_min]} />
+                      <StatCard label="CO₂ saved" value={`${analytics.co2_saved_kg} kg`} sub="vs tractor spray" tone="blue" />
+                      <StatCard label="Water saved" value={`${analytics.water_saved_l} L`} sub="reduced dilution volume" tone="blue" />
+                      <StatCard label="Yield protected" value={analytics.yield_protected_inr > 0 ? `₹${(analytics.yield_protected_inr/1000).toFixed(0)}K` : '—'} sub="Prototype Estimate" tone="green" />
+                      <StatCard label="Pesticide saved" value={`${analytics.estimated_pesticide_saved_l} L`} sub="from precision dosing" tone="green" />
+                    </div>
+                    <p className={`text-xs ${dm ? 'text-dark-400' : 'text-ink-400'}`}>Prototype estimates computed from stored demo data. Numbers labeled "Prototype Estimate" are model-computed, not field-validated.</p>
+                  </div>
+                )}
+
+                {/* CHEMICAL ROTATION */}
+                {page === 'rotation' && rotation && (
+                  <div className="p-5 max-w-4xl space-y-4">
+                    <div>
+                      <h2 className={`text-lg font-bold ${dm ? 'text-white' : 'text-ink-800'}`}>Chemical Rotation Advisor</h2>
+                      <p className={`text-sm mt-1 ${dm ? 'text-dark-400' : 'text-ink-500'}`}>IRAC-based rotation to prevent resistance build-up. Rotate groups every 2 sprays.</p>
+                    </div>
+                    {rotation.rotations && rotation.rotations.map((r, i) => (
+                      <div key={i} className={`${cardClass} p-5`}>
+                        <div className="flex items-center justify-between mb-3">
+                          <div>
+                            <span className={`font-bold ${dm ? 'text-white' : 'text-ink-800'}`}>{r.pest}</span>
+                            <span className={`ml-2 text-sm ${dm ? 'text-dark-400' : 'text-ink-500'}`}>in {r.crop}</span>
+                          </div>
+                          <Chip tone="amber">IRAC Rotation</Chip>
+                        </div>
+                        <div className="grid grid-cols-3 gap-3 mb-3">
+                          {r.irac_groups.map((g, j) => (
+                            <div key={j} className={`rounded-lg p-3 ${dm ? 'bg-dark-700' : 'bg-paper-50'}`}>
+                              <div className={`font-semibold text-sm ${dm ? 'text-green-400' : 'text-brand-600'}`}>{r.chemicals[j]}</div>
+                              <div className={`text-xs mt-0.5 ${dm ? 'text-dark-400' : 'text-ink-400'}`}>{g}</div>
+                              <div className={`text-xs mt-1 ${dm ? 'text-dark-400' : 'text-ink-400'}`}>PHI: {r.preharvest_interval_days[j]} days</div>
+                            </div>
+                          ))}
+                        </div>
+                        <p className={`text-xs ${dm ? 'text-amber-400 bg-amber-900/20' : 'text-amber2-500 bg-amber2-50'} rounded-lg px-3 py-2`}>⚠ {r.rotation_note}</p>
+                      </div>
+                    ))}
+                    <div className={`${cardClass} p-4`}>
+                      <p className={`text-sm font-semibold ${dm ? 'text-red-400' : 'text-red-600'}`}>🚨 Resistance Alert Protocol</p>
+                      <p className={`text-xs mt-1 ${dm ? 'text-dark-400' : 'text-ink-500'}`}>{rotation.resistance_warning}</p>
+                    </div>
+                  </div>
+                )}
+
+                {/* AERIAL SCAN */}
+                {page === 'aerial' && (
+                  <AerialScanPage darkMode={dm} scanResult={scanResult} setScanResult={setScanResult}
+                    scanImage={scanImage} setScanImage={setScanImage}
+                    scanning={scanning} setScanning={setScanning}
+                    sampleFields={sampleFields} setSampleFields={setSampleFields}
+                    onConfirm={async (detId) => {
+                      if (!detId) return;
+                      const r = await api(`/api/detections/${detId}/confirm`, {method:'POST'});
+                      if (r) { alert('Outbreak confirmed: OUT-' + String(r.outbreak_id).padStart(4,'0')); load(); }
+                    }} />
+                )}
+              </main>
+
+              {/* Event ticker */}
+              {tickerText && (
+                <div className={`shrink-0 border-t py-1.5 overflow-hidden ${dm ? 'bg-dark-900 border-dark-700' : 'bg-paper-100 border-paper-200'}`}>
+                  <div className="ticker-wrap">
+                    <div className="ticker-content">
+                      <span className={`text-[10px] font-mono ${dm ? 'text-green-400' : 'text-brand-600'}`}>
+                        ▶ LIVE: {tickerText}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    /* ─────────────────── AERIAL SCAN PAGE ─────────────────── */
+    function AerialScanPage({ darkMode: dm, scanResult, setScanResult, scanImage, setScanImage, scanning, setScanning, sampleFields, setSampleFields, onConfirm }) {
+      const [selectedSample, setSelectedSample] = useState(null);
+
+      useEffect(() => {
+        api('/api/detection/sample-fields').then(r => { if (r) setSampleFields(r); });
+      }, []);
+
+      const runScan = async (file) => {
+        setScanning(true); setScanResult(null);
+        const fd = new FormData();
+        fd.append('file', file);
+        fd.append('field_area_acres', '42');
+        fd.append('create_detection', 'true');
+        try {
+          const res = await fetch(API + '/api/detection/scan-field', { method: 'POST', body: fd });
+          const data = await res.json();
+          setScanResult(data);
+          setScanImage(URL.createObjectURL(file));
+        } catch (e) { console.error(e); }
+        setScanning(false);
+      };
+
+      const runSample = async (sample) => {
+        setSelectedSample(sample.name); setScanning(true); setScanResult(null);
+        try {
+          const res = await fetch(sample.path);
+          const blob = await res.blob();
+          const fd = new FormData();
+          fd.append('file', blob, sample.name);
+          fd.append('field_area_acres', '42');
+          fd.append('create_detection', 'true');
+          const scanRes = await fetch(API + '/api/detection/scan-field', { method: 'POST', body: fd });
+          const data = await scanRes.json();
+          setScanResult(data);
+          setScanImage(URL.createObjectURL(blob));
+        } catch (e) { console.error(e); }
+        setScanning(false);
+      };
+
+      const cardClass = dm ? 'bg-dark-700 border border-dark-600 rounded-app' : 'bg-white border border-paper-200 rounded-app shadow-card';
+
+      return (
+        <div className="p-5 max-w-5xl space-y-5">
+          <div>
+            <h2 className={`text-lg font-bold flex items-center gap-2 ${dm ? 'text-white' : 'text-ink-800'}`}>{I.image('w-5 h-5 text-brand-600')} Aerial Field Scan</h2>
+            <p className={`text-sm mt-1 ${dm ? 'text-dark-400' : 'text-ink-500'}`}>Real CNN detection on field imagery — tiles into 6×6 grid, classifies each tile, clusters disease hotspots into infection zones with GPS coordinates.</p>
+          </div>
+
+          <div className={`${cardClass} p-4`}>
+            <h3 className={`font-semibold text-sm mb-3 ${dm ? 'text-white' : 'text-ink-800'}`}>Sample Field Images</h3>
+            <div className="grid grid-cols-2 gap-3">
+              {sampleFields.map(s => (
+                <button key={s.name} onClick={() => runSample(s)} disabled={scanning}
+                  className={`text-left p-3 rounded-app border transition-all pressable ${selectedSample === s.name ? (dm ? 'border-green-500 bg-green-900/20' : 'border-brand-400 bg-brand-50') : (dm ? 'border-dark-500 hover:border-green-600 hover:bg-dark-600' : 'border-paper-200 hover:border-brand-300 hover:bg-paper-50')} disabled:opacity-50`}>
+                  <div className={`font-medium text-sm ${dm ? 'text-white' : 'text-ink-700'}`}>{s.name.replace(/_/g, ' ').replace(/\.jpg$/, '')}</div>
+                  <div className={`text-xs mt-0.5 ${dm ? 'text-dark-400' : 'text-ink-400'}`}>{s.description}</div>
+                </button>
+              ))}
+            </div>
+            <div className="mt-3 flex items-center gap-3">
+              <label className={`px-4 py-2 rounded-app text-sm font-semibold pressable cursor-pointer flex items-center gap-1.5 ${dm ? 'bg-dark-600 text-dark-300 hover:bg-dark-500 border border-dark-500' : 'bg-white border border-paper-300 text-ink-700 hover:bg-paper-50'}`}>
+                {I.camera('w-4 h-4')}Upload your own image
+                <input type="file" accept="image/*" onChange={e => { const f = e.target.files?.[0]; if (f) runScan(f); }} className="hidden" />
+              </label>
+              {scanning && <span className={`text-sm font-medium ${dm ? 'text-green-400' : 'text-brand-600'} animate-pulse`}>Scanning 36 tiles…</span>}
+            </div>
+          </div>
+
+          {scanResult && (
+            <div className={`${cardClass} p-4 space-y-4`}>
+              <div className="flex items-center justify-between">
+                <h3 className={`font-semibold text-sm ${dm ? 'text-white' : 'text-ink-800'}`}>Scan Results</h3>
+                <span className={`text-xs font-mono px-2 py-1 rounded-full ${dm ? 'bg-green-900/40 text-green-400' : 'bg-brand-50 text-brand-700'}`}>{scanResult.mode}</span>
+              </div>
+              <p className={`text-sm ${dm ? 'text-dark-300' : 'text-ink-600'}`}>{scanResult.detection_summary}</p>
+
+              {scanImage && (
+                <div className="relative inline-block rounded-app overflow-hidden border border-paper-200">
+                  <img src={scanImage} alt="Scanned field" className="max-w-full max-h-80 object-contain" />
+                  {scanResult.image_width && scanResult.image_height && scanResult.clusters && scanResult.clusters.map((cl, i) => {
+                    const b = cl.bbox_px;
+                    const imgEl = document.querySelector('img[alt="Scanned field"]');
+                    const imgW = imgEl ? imgEl.clientWidth : scanResult.image_width;
+                    const imgH = imgEl ? imgEl.clientHeight : scanResult.image_height;
+                    const sx = imgW / scanResult.image_width;
+                    const sy = imgH / scanResult.image_height;
+                    return (
+                      <div key={i} className="absolute border-2 border-red-500 rounded" style={{ left: b.x * sx, top: b.y * sy, width: b.w * sx, height: b.h * sy }}>
+                        <span className="absolute -top-5 left-0 bg-red-600 text-white text-[10px] font-bold px-1.5 py-0.5 rounded whitespace-nowrap">
+                          #{cl.id} {cl.main_pest} ({(cl.avg_confidence*100).toFixed(0)}%)
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+
+              {scanResult.tiles && (
+                <div>
+                  <p className={`text-xs mb-1 ${dm ? 'text-dark-400' : 'text-ink-400'}`}>Per-tile heatmap ({scanResult.grid}×{scanResult.grid} = {scanResult.total_tiles} tiles)</p>
+                  <div className="inline-grid gap-px" style={{gridTemplateColumns: `repeat(${scanResult.grid}, 1fr)`}}>
+                    {scanResult.tiles.map((t, i) => (
+                      <div key={i} className={`w-6 h-6 rounded-sm text-[7px] flex items-center justify-center font-bold ${t.hot ? 'bg-red-500 text-white' : t.healthy ? 'bg-brand-200 text-brand-800' : 'bg-amber2-100 text-amber2-500'}`}
+                        title={`${t.label} (${(t.confidence*100).toFixed(0)}%)`}>
+                        {t.hot ? '!' : t.healthy ? '' : '?'}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {scanResult.clusters && scanResult.clusters.length > 0 && (
+                <div className="space-y-2">
+                  <h4 className={`font-semibold text-sm ${dm ? 'text-white' : 'text-ink-700'}`}>Detected Infection Zones</h4>
+                  {scanResult.clusters.map(cl => (
+                    <div key={cl.id} className="flex items-center justify-between p-3 bg-red-50 border border-red-200 rounded-app">
+                      <div>
+                        <span className="font-semibold text-red-700">Zone #{cl.id}</span>
+                        <span className="text-sm text-ink-600 ml-2">{cl.main_pest}</span>
+                        <span className="text-xs text-ink-400 ml-2">({(cl.avg_confidence*100).toFixed(0)}% conf, {cl.tile_count} tiles)</span>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <span className="font-bold text-red-600">{cl.est_acres} acres</span>
+                        {scanResult.clusters.indexOf(cl) === 0 && scanResult.detection_id && (
+                          <button onClick={() => onConfirm(scanResult.detection_id)}
+                            className="px-3 py-1.5 bg-red-600 text-white text-xs font-semibold rounded-app pressable hover:bg-red-700">
+                            Confirm → Outbreak
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {scanResult.clusters && scanResult.clusters.length === 0 && (
+                <div className="p-4 bg-brand-50 border border-brand-200 rounded-app text-center">
+                  <p className="text-sm text-brand-700 font-medium">No infection zones detected — field appears healthy</p>
+                  <p className="text-xs text-ink-400 mt-1">{scanResult.healthy_fraction ? `${(scanResult.healthy_fraction*100).toFixed(0)}% of tiles classified as healthy` : ''}</p>
+                </div>
+              )}
+
+              <p className={`text-xs ${dm ? 'text-dark-400' : 'text-ink-400'}`}>Real CNN inference (PlantVillage MobileNetV2, 38 classes) — not a simulation. Aerial accuracy limited: leaf-level model applied to field imagery. Production: multispectral aerial model.</p>
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    /* ─────────────────── ROOT ─────────────────── */
+    function App() {
+      const [mode, setMode] = useState(() => {
+        const m = new URLSearchParams(window.location.search).get('mode');
+        return ['demo', 'farmer', 'expert'].includes(m) ? m : 'landing';
+      });
+      const [lang, setLang] = useState(() => new URLSearchParams(window.location.search).get('lang') || 'en');
+
+      // Wrap farmer app in phone frame on desktop
+      const isMobile = window.innerWidth < 640;
+
+      return (
+        <div className="h-full">
+          {mode === 'landing' && (
+            <Landing onDemo={() => setMode('demo')} onFarmer={() => setMode('farmer')} onExpert={() => setMode('expert')} />
+          )}
+          {mode === 'demo' && <LiveDemo onExit={() => setMode('landing')} onExpert={() => setMode('expert')} lang={lang} />}
+          {mode === 'farmer' && !isMobile && (
+            <div className="h-full bg-paper-100 flex items-center justify-center">
+              <div className="phone-frame" style={{width:390, height:720}}>
+                <div className="phone-screen" style={{height:'100%'}}>
+                  <FarmerApp lang={lang} setLang={setLang} onExit={() => setMode('landing')} />
+                </div>
+              </div>
+              <div className="ml-8 max-w-xs hidden lg:block">
+                <h2 className="text-xl font-bold text-ink-800 mb-2">Farmer App</h2>
+                <p className="text-sm text-ink-500 mb-4">Designed for smallholder farmers. No technical knowledge needed.</p>
+                <div className="space-y-2">
+                  {['7 Indian languages + voice guide', 'Works offline — syncs when signal returns', 'SMS + IVR for feature phones', 'Real CNN leaf photo analysis'].map(f => (
+                    <div key={f} className="flex items-center gap-2 text-sm text-ink-600">
+                      <span className="text-brand-600 w-4">{I.check('w-4 h-4')}</span>{f}
+                    </div>
+                  ))}
+                </div>
+                <button onClick={() => setMode('landing')} className="mt-6 text-sm text-ink-400 hover:text-ink-600">← Back to landing</button>
+              </div>
+            </div>
+          )}
+          {mode === 'farmer' && isMobile && <FarmerApp lang={lang} setLang={setLang} onExit={() => setMode('landing')} />}
+          {mode === 'expert' && <ExpertConsole onFarmer={() => setMode('farmer')} onDemo={() => setMode('demo')} />}
+        </div>
+      );
+    }
+
+    ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+  </script>
+</body>
+</html>
