@@ -610,6 +610,95 @@
     try { pendingQueue.push(...JSON.parse(localStorage.getItem('fs_queue') || '[]')); } catch (e) {}
     const saveQueue = () => { try { localStorage.setItem('fs_queue', JSON.stringify(pendingQueue)); } catch (e) {} };
 
+    /* ═══════════════════════════════════════════════════════════
+       ACCESSIBILITY & VOICE NARRATION FOR BLIND / LOW-VISION USERS
+    ═══════════════════════════════════════════════════════════ */
+    const ACCESSIBILITY_GUIDE = {
+      'start live demo': 'Autonomous 6-stage pest response pipeline. Simulates crop scanning, AI spread prediction, drone fleet selection, flight routing, chemical treatment, and containment.',
+      'explore farmer app': 'Farmer mobile app. Supports 7 Indian languages, offline pest reporting queue, voice guide, and SMS IVR alerts.',
+      'microclimate sandbox': 'Interactive disease spread simulator. Change temperature, humidity, and wind to see downwind drift ellipses and financial crop loss models.',
+      'ai leaf diagnosis lab': 'Neural network diagnosis lab. Runs the PlantVillage MobileNetV2 vision model on leaf photos with Top-3 disease confidence.',
+      'expert console': 'Agronomist and fleet operations dashboard with live GPS tracking, chemical rotation advisor, aerial scan clustering, and audit event logs.',
+      'judge pitch tour': 'Guided 6-step presentation tour explaining the problem, real AI model, microclimate physics, and accessibility features.',
+      'dark mode': 'Toggles between dark mode and light mode for optimal screen contrast.',
+      
+      // Scenarios
+      'cotton bollworm': 'Cotton bollworm baseline scenario. Tests 2.1 acres outbreak under 78% humidity with drone precision spray saving 78% chemical.',
+      'maize fall armyworm': 'Maize fall armyworm scenario under 38 kilometer per hour high wind storm drift across 4.5 acres.',
+      'tomato late blight': 'Tomato fungal epidemic scenario. Dispatches biological Trichoderma and copper to avert chemical resistance.',
+      'rice stem borer': 'Rice paddy stem borer scenario. Demonstrates intelligent fleet failover when a drone has low battery.',
+
+      // Live Demo Controls
+      'start demo': 'Starts the 6-stage autonomous pest containment demo. Drone, spread model, and SMS notification will execute in sequence.',
+      'run again': 'Restarts the current demo scenario from stage 1.',
+      'reset': 'Resets all simulated outbreak data, agent locations, and missions back to initial state.',
+      'system events': 'Opens the real-time system event log displaying autonomous decisions and telemetry.',
+      
+      // Sandbox Presets & Controls
+      'storm drift': 'Disaster preset: 35 degrees Celsius, 38 kilometer per hour wind. Simulates severe downwind spore drift.',
+      'fungal bloom': 'Disaster preset: 23 degrees Celsius, 94% humidity. Simulates epidemic fungal spore bloom.',
+      'baseline delta': 'Disaster preset: 29 degrees Celsius, 78% humidity. Standard moderate risk baseline conditions.',
+      'live': 'Toggles live auto-refresh calculation whenever you move any microclimate slider.',
+      'temperature': 'Adjusts ambient temperature in Celsius to calculate pest growth velocity.',
+      'humidity': 'Adjusts relative humidity percentage to simulate fungal spore and insect reproduction conditions.',
+      'wind speed': 'Adjusts wind velocity in kilometers per hour to simulate downwind pest drift.',
+      'wind direction': 'Rotates the wind direction angle from 0 to 360 degrees, changing the drift ellipse geometry.',
+      'base outbreak area': 'Sets initial infected plot area in acres before containment starts.',
+      'response delay': 'Simulates the delay hours before containment begins to compare delayed vs rapid intervention.',
+
+      // Farmer App Features
+      'check crop': 'Takes or uploads a photo of your crop leaf for instant AI disease diagnosis.',
+      'speak': 'Voice search. Speak your question or symptoms aloud in your preferred language.',
+      'get help': 'Connects you to local agricultural extension officers, Krishi Vigyan Kendra, or village agronomists.',
+      'view history': 'Shows your past crop checks, diagnoses, and spray records.',
+      'read aloud': 'Voice guide toggle. Reads screen contents and diagnoses aloud.',
+      'home': 'Navigates to your farm overview home screen.',
+      'my farm': 'Shows your registered field blocks, acreage, and monitoring status.',
+      'alerts': 'Displays active pest warnings and emergency broadcast notices.',
+      'profile': 'Farmer profile settings, preferred language selection, and network offline mode toggle.',
+
+      // AI Leaf Lab
+      'sample leaf': 'Selects a sample leaf photograph to test real CNN disease detection.',
+      'upload leaf photo': 'Uploads a photograph from your device to run on-device neural net inference.',
+      'speak result': 'Reads the neural network diagnosis and Top-3 scores aloud.'
+    };
+
+    function playAudioTone(freq1 = 520, freq2 = 880, duration = 0.12) {
+      try {
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        if (!AudioCtx) return;
+        const ctx = new AudioCtx();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(freq1, ctx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(freq2, ctx.currentTime + duration);
+        gain.gain.setValueAtTime(0.08, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + duration + 0.05);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start();
+        osc.stop(ctx.currentTime + duration + 0.05);
+      } catch (e) {}
+    }
+
+    function narrateFeature(title, desc, lang = 'en', onEnd) {
+      if (!window.speechSynthesis) return;
+      try {
+        window.speechSynthesis.cancel();
+        const textToSpeak = `${title}. ${desc || ''}`;
+        const u = new SpeechSynthesisUtterance(textToSpeak);
+        u.rate = 0.95; // Clear deliberate pacing for accessibility
+        u.pitch = 1.0;
+        const langMap = { ta: 'ta-IN', hi: 'hi-IN', te: 'te-IN', kn: 'kn-IN', ml: 'ml-IN', mr: 'mr-IN', en: 'en-IN' };
+        u.lang = langMap[lang] || 'en-IN';
+        if (onEnd) u.onend = onEnd;
+        window.speechSynthesis.speak(u);
+      } catch (e) {
+        console.warn('Speech synthesis error:', e);
+      }
+    }
+
     /* ─────────────────── SHARED COMPONENTS ─────────────────── */
     function TopBar({ title, subtitle, right, onBack }) {
       return (
@@ -3280,12 +3369,91 @@
       });
       const [lang, setLang] = useState(() => new URLSearchParams(window.location.search).get('lang') || 'en');
       const [showTour, setShowTour] = useState(false);
+      const [blindMode, setBlindMode] = useState(() => {
+        try { return localStorage.getItem('fs_blind_mode') === 'true'; } catch (e) { return false; }
+      });
+      const [lastSpoken, setLastSpoken] = useState('');
+      const [isSpeaking, setIsSpeaking] = useState(false);
+
+      // Accessibility Audio & Click Listener for Blind Users
+      useEffect(() => {
+        try { localStorage.setItem('fs_blind_mode', blindMode ? 'true' : 'false'); } catch (e) {}
+        if (!blindMode) {
+          try { window.speechSynthesis && window.speechSynthesis.cancel(); } catch (e) {}
+          return;
+        }
+
+        narrateFeature(
+          'Blind Mode Active',
+          'Voice guidance is now on. Click or tap any option on the screen to hear what it is and what it does. Press Alt+A at any time to toggle off.',
+          lang
+        );
+
+        const handleClick = (e) => {
+          const el = e.target.closest('button, a, input, select, [role="button"], [data-voice]');
+          if (!el) return;
+          const label = el.getAttribute('data-voice') || el.getAttribute('aria-label') || el.getAttribute('title') || el.innerText || el.value || 'Option';
+          const cleanLabel = label.trim().replace(/\s+/g, ' ').slice(0, 50);
+          if (!cleanLabel) return;
+          const lower = cleanLabel.toLowerCase();
+
+          let desc = el.getAttribute('data-desc') || '';
+          if (!desc) {
+            for (const [key, val] of Object.entries(ACCESSIBILITY_GUIDE)) {
+              if (lower.includes(key) || key.includes(lower)) {
+                desc = val;
+                break;
+              }
+            }
+          }
+          if (!desc) {
+            if (el.tagName === 'INPUT' && el.type === 'range') desc = `Slider control currently set to ${el.value}`;
+            else desc = 'Interactive option button';
+          }
+
+          playAudioTone(440, 880, 0.1);
+          setLastSpoken(`${cleanLabel}: ${desc}`);
+          setIsSpeaking(true);
+          narrateFeature(cleanLabel, desc, lang, () => setIsSpeaking(false));
+        };
+
+        const handleKeyDown = (e) => {
+          if (e.altKey && (e.key === 'a' || e.key === 'A' || e.key === 'v')) {
+            e.preventDefault();
+            setBlindMode(prev => !prev);
+          }
+        };
+
+        document.addEventListener('click', handleClick, true);
+        window.addEventListener('keydown', handleKeyDown);
+        return () => {
+          document.removeEventListener('click', handleClick, true);
+          window.removeEventListener('keydown', handleKeyDown);
+        };
+      }, [blindMode, lang]);
 
       // Wrap farmer app in phone frame on desktop
       const isMobile = window.innerWidth < 640;
 
+      const describeCurrentPage = () => {
+        playAudioTone(440, 880, 0.1);
+        const pageDesc = mode === 'landing'
+          ? 'FarmShield Landing Page. Options available: Start Live Demo, Explore Farmer Mobile App, Open Microclimate Sandbox, or Open AI Leaf Lab.'
+          : mode === 'demo'
+          ? 'Live Pest Response Demo screen. Options available: select crop scenario, and click Start Demo to execute autonomous 6-stage response.'
+          : mode === 'sandbox'
+          ? 'Microclimate Spread Sandbox. Options available: Quick Disaster Presets, temperature, humidity, and wind sliders.'
+          : mode === 'labscan'
+          ? 'AI Leaf Lab. Options available: select sample leaves or upload photos to run convolutional neural network disease diagnosis.'
+          : mode === 'expert'
+          ? 'Agronomist Expert Console with 11 operator tabs for fleet monitoring and chemical rotation.'
+          : 'Farmer Mobile Application.';
+        setLastSpoken(pageDesc);
+        narrateFeature('Current Screen Overview', pageDesc, lang);
+      };
+
       return (
-        <div className="h-full">
+        <div className="h-full relative">
           {showTour && <JudgeTourModal onClose={() => setShowTour(false)} onDemo={() => { setShowTour(false); setMode('demo'); }} onSandbox={() => { setShowTour(false); setMode('sandbox'); }} onLab={() => { setShowTour(false); setMode('labscan'); }} />}
           {mode === 'landing' && (
             <Landing onDemo={() => setMode('demo')} onFarmer={() => setMode('farmer')} onExpert={() => setMode('expert')} onSandbox={() => setMode('sandbox')} onLab={() => setMode('labscan')} onTour={() => setShowTour(true)} />
@@ -3316,6 +3484,49 @@
           )}
           {mode === 'farmer' && isMobile && <FarmerApp lang={lang} setLang={setLang} onExit={() => setMode('landing')} />}
           {mode === 'expert' && <ExpertConsole onFarmer={() => setMode('farmer')} onDemo={() => setMode('demo')} />}
+
+          {/* Floating Blind Accessibility Assistant */}
+          <div className="fixed bottom-4 right-4 z-[9999] flex flex-col items-end gap-2 pointer-events-auto" role="region" aria-label="Voice Accessibility Assistant">
+            {blindMode && (
+              <div className="bg-ink-900/95 border border-brand-500/50 text-white rounded-2xl p-3 shadow-raised max-w-xs backdrop-blur-md text-xs flex flex-col gap-1.5 animate-fadeIn">
+                <div className="flex items-center justify-between gap-2 border-b border-white/10 pb-1.5">
+                  <span className="font-bold text-brand-400 flex items-center gap-1.5">
+                    <span className={`w-2 h-2 rounded-full ${isSpeaking ? 'bg-brand-400 animate-ping' : 'bg-brand-500'}`}></span>
+                    Voice Guide for Blind Users
+                  </span>
+                  <span className="text-[10px] text-ink-300 font-mono bg-white/10 px-1.5 py-0.5 rounded">Alt+A</span>
+                </div>
+                <p className="text-white/80 text-[11px] leading-relaxed line-clamp-3">
+                  {lastSpoken || "Click, tap, or tab to any button or slider to hear what it is and what it does."}
+                </p>
+                <div className="flex items-center gap-2 pt-1">
+                  {lastSpoken && (
+                    <button onClick={() => { playAudioTone(520, 880, 0.1); narrateFeature(lastSpoken, '', lang); }}
+                      className="px-2.5 py-1 bg-white/10 hover:bg-white/20 rounded-md text-[10px] font-semibold text-brand-300 flex items-center gap-1 pressable"
+                      aria-label="Repeat last spoken explanation">
+                      🔊 Repeat
+                    </button>
+                  )}
+                  <button onClick={describeCurrentPage}
+                    className="px-2.5 py-1 bg-white/10 hover:bg-white/20 rounded-md text-[10px] font-semibold text-white/90 flex items-center gap-1 pressable"
+                    aria-label="Describe current screen and all features">
+                    ℹ️ What's on Screen?
+                  </button>
+                </div>
+              </div>
+            )}
+
+            <button
+              onClick={() => setBlindMode(prev => !prev)}
+              className={`px-4 py-2.5 rounded-full font-bold text-xs shadow-raised flex items-center gap-2 pressable transition-all ${
+                blindMode ? 'bg-brand-600 hover:bg-brand-500 text-white ring-4 ring-brand-500/30' : 'bg-ink-900/90 hover:bg-ink-900 text-white border border-white/20'
+              }`}
+              aria-label={blindMode ? "Turn off Blind Voice Guidance" : "Turn on Blind Voice Guidance (Screen Reader)"}
+              title="Voice Guide for Blind and Low Vision Users (Shortcut: Alt+A)">
+              <span className="text-base">{blindMode ? '🔊' : '🔈'}</span>
+              <span>{blindMode ? 'Blind Voice Mode: ON' : 'Blind Voice Mode'}</span>
+            </button>
+          </div>
         </div>
       );
     }
