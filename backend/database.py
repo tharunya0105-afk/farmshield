@@ -9,7 +9,9 @@ from sqlalchemy import (
 )
 from sqlalchemy.orm import declarative_base, sessionmaker, relationship
 
-if os.getenv("VERCEL"):
+if os.getenv("RENDER"):
+    DATABASE_URL = "sqlite:////var/data/farmshield.db"
+elif os.getenv("VERCEL"):
     DATABASE_URL = "sqlite:////tmp/farmshield.db"
 else:
     DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./farmshield.db")
