@@ -9,7 +9,10 @@ from sqlalchemy import (
 )
 from sqlalchemy.orm import declarative_base, sessionmaker, relationship
 
-DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./farmshield.db")
+if os.getenv("VERCEL"):
+    DATABASE_URL = "sqlite:////tmp/farmshield.db"
+else:
+    DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./farmshield.db")
 connect_args = {"check_same_thread": False} if "sqlite" in DATABASE_URL else {}
 engine = create_engine(DATABASE_URL, connect_args=connect_args, pool_pre_ping=True)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)

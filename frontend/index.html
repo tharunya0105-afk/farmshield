@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>FarmShield — Detect Early. Predict Spread. Protect Precisely.</title>
   <meta name="description" content="FarmShield: AI-powered autonomous crop pest containment. Real CNN detection, predictive spread modeling, and precision drone dispatch for Indian farmers." />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🛡️</text></svg>">
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -60,7 +61,7 @@
     }
   </script>
   <style>
-    body { font-family: 'Inter','Noto Sans Tamil',system-ui,sans-serif; }
+    body { font-family: 'Inter','Noto Sans Tamil',system-ui,sans-serif; -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
 
     /* Leaflet overrides */
     .leaflet-container { background: #e8e8e0 !important; font-family: 'Inter',sans-serif; }
@@ -119,6 +120,7 @@
 
     /* Hero animated background */
     .hero-bg {
+      background-color: #1a451e;
       background: linear-gradient(135deg, #0d2410 0%, #1a451e 30%, #1f5523 60%, #246828 100%);
       position: relative; overflow: hidden;
     }
@@ -142,7 +144,7 @@
     .dark-panel .dark-text-secondary { color: #8b949e; }
     .dark-panel .dark-text-accent { color: #58a6ff; }
     .dark-panel .dark-border { border-color: #30363d; }
-    .dark-panel .dark-nav-item { color: #8b949e; }
+    .dark-panel .dark-nav-item { color: #c9d1d9; }
     .dark-panel .dark-nav-item.active { background: rgba(58,158,61,0.15); color: #3fb950; border-right: 2px solid #3fb950; }
     .dark-panel .dark-nav-item:hover:not(.active) { background: #21262d; color: #e6edf3; }
 
@@ -182,10 +184,137 @@
       border: 2px solid rgba(58,158,61,0.5); border-radius: 50%;
       animation: containRing 2s ease-out forwards;
     }
+
+    /* === WORLD-CLASS UPGRADE CSS === */
+
+    /* Premium dark AgTech theme */
+    :root {
+      --agtech-bg: #040d08;
+      --agtech-surface: #0a1a10;
+      --agtech-card: #0f2318;
+      --agtech-border: rgba(58,158,61,0.18);
+      --agtech-glow: rgba(58,158,61,0.35);
+      --agtech-accent: #22c55e;
+      --agtech-accent2: #4ade80;
+      --agtech-warn: #f59e0b;
+      --agtech-danger: #ef4444;
+      --agtech-text: #e2fce4;
+      --agtech-muted: #aadbb0;
+    }
+
+    /* AgTech command-center body */
+    .agtech-bg::-webkit-scrollbar { width: 6px; height: 6px; }
+    .agtech-bg::-webkit-scrollbar-track { background: rgba(0,0,0,0.2); }
+    .agtech-bg::-webkit-scrollbar-thumb { background: rgba(34,197,94,0.3); border-radius: 4px; }
+    .agtech-bg::-webkit-scrollbar-thumb:hover { background: rgba(34,197,94,0.5); }
+    .agtech-bg { color: #e2fce4; font-family: 'Inter', 'Noto Sans Tamil', system-ui, sans-serif;
+      background-color: #040d08;
+      background: radial-gradient(ellipse at 10% 30%, rgba(34,197,94,0.08) 0%, transparent 50%),
+                  radial-gradient(ellipse at 90% 70%, rgba(59,130,246,0.06) 0%, transparent 50%),
+                  linear-gradient(160deg, #040d08 0%, #060f0a 40%, #04100c 100%);
+      min-height: 100%;
+    }
+
+    /* AgTech glassmorphism card */
+    .agtech-card {
+      background-color: #0f2318;
+      background: rgba(15, 35, 24, 0.95);
+      border: 1px solid rgba(58,158,61,0.25);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      color: #e2fce4;
+    }
+
+    /* Cyber grid overlay */
+    .agtech-grid {
+      background-image:
+        linear-gradient(rgba(34,197,94,0.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(34,197,94,0.04) 1px, transparent 1px);
+      background-size: 32px 32px;
+    }
+
+    /* Neon status badges */
+    .badge-online { background: rgba(34,197,94,0.2); color: #86efac; border: 1px solid rgba(34,197,94,0.4); border-radius: 20px; padding: 2px 10px; font-size: 11px; font-weight: 700; }
+    .badge-warn   { background: rgba(245,158,11,0.15); color: #fbbf24; border: 1px solid rgba(245,158,11,0.4); border-radius: 20px; padding: 2px 10px; font-size: 11px; font-weight: 700; }
+    .badge-danger { background: rgba(239,68,68,0.15); color: #f87171; border: 1px solid rgba(239,68,68,0.4); border-radius: 20px; padding: 2px 10px; font-size: 11px; font-weight: 700; }
+
+    /* Glowing primary button */
+    .btn-glow {
+      background: linear-gradient(135deg, #16a34a, #22c55e);
+      color: white; font-weight: 700; border-radius: 12px;
+      box-shadow: 0 0 24px rgba(34,197,94,0.4), 0 4px 12px rgba(0,0,0,0.3);
+      transition: all 0.2s ease;
+    }
+    .btn-glow:hover { box-shadow: 0 0 36px rgba(34,197,94,0.6), 0 6px 16px rgba(0,0,0,0.4); transform: translateY(-1px); }
+    .btn-glow:active { transform: scale(0.97); }
+
+    /* Slider styling */
+    input[type=range].agtech-slider { -webkit-appearance: none; appearance: none; width: 100%; height: 6px;
+      background: rgba(34,197,94,0.2); border-radius: 4px; outline: none; }
+    input[type=range].agtech-slider::-webkit-slider-thumb { -webkit-appearance: none; width: 18px; height: 18px;
+      background: #22c55e; border-radius: 50%; cursor: pointer; box-shadow: 0 0 8px rgba(34,197,94,0.6); }
+
+    /* Scanning animation for AI lab */
+    @keyframes scanbeam { 0%{top:0%} 100%{top:96%} }
+    .scan-beam { position:absolute; left:0; right:0; height:3px;
+      background: linear-gradient(90deg, transparent, #22c55e, transparent);
+      animation: scanbeam 1.4s ease-in-out infinite alternate;
+      box-shadow: 0 0 12px rgba(34,197,94,0.8); }
+
+    /* Confidence bar */
+    @keyframes barGrow { from{width:0} to{width:var(--bar-w)} }
+    .conf-bar { animation: barGrow 1.2s cubic-bezier(0.4,0,0.2,1) forwards; }
+
+    /* Drone lawnmower path */
+    @keyframes droneMove { 0%{offset-distance:0%} 100%{offset-distance:100%} }
+    .drone-path-anim { animation: droneMove 8s linear infinite; }
+
+    /* Wind arrow rotation */
+    @keyframes windSpin { 0%{transform:rotate(0deg)} 100%{transform:rotate(360deg)} }
+
+    /* Glowing spread ring on map */
+    @keyframes outbreakPulse { 0%{opacity:0.8;transform:scale(1)} 100%{opacity:0;transform:scale(2.2)} }
+    .outbreak-pulse-anim { animation: outbreakPulse 2s ease-out infinite; }
+
+    /* INR ticker */
+    @keyframes numFlip { 0%{transform:translateY(-10px);opacity:0} 100%{transform:translateY(0);opacity:1} }
+    .num-flip { animation: numFlip 0.3s ease-out forwards; }
+
+    /* Tab active indicator */
+    .agtech-tab { border-bottom: 2px solid transparent; transition: all 0.2s ease; color: #c4e8ca; }
+    .agtech-tab.active { border-bottom-color: #22c55e; color: #4ade80; }
+    .agtech-tab:hover:not(.active) { color: #a3d9a8; }
+
+    /* WhatsApp simulator */
+    .whatsapp-bg { background: linear-gradient(180deg, #075e54 0%, #128c7e 100%); }
+    .wa-bubble-in { background: #dcf8c6; color: #111; border-radius: 18px 18px 18px 4px; }
+    .wa-bubble-out { background: #fff; color: #111; border-radius: 18px 18px 4px 18px; }
+
+    /* IVR phone */
+    .ivr-phone { background: linear-gradient(135deg, #1a1a2e, #16213e); border: 2px solid #0f3460; border-radius: 24px; }
+    @keyframes phonePulse { 0%,100%{box-shadow:0 0 0 0 rgba(34,197,94,0.4)} 50%{box-shadow:0 0 0 12px rgba(34,197,94,0)} }
+    .phone-calling { animation: phonePulse 1.5s ease-in-out infinite; }
+
+    /* Lawnmower path on mini map */
+    .path-segment { stroke-dasharray: 4 4; animation: dashMove 0.8s linear infinite; }
+    @keyframes dashMove { to { stroke-dashoffset: -16; } }
+
+    /* Judge tour highlight */
+    .judge-highlight { border: 2px solid #22c55e; box-shadow: 0 0 20px rgba(34,197,94,0.3); border-radius: 12px; }
   </style>
 </head>
-<body class="h-full bg-paper-100 text-ink-800 antialiased">
-  <div id="root" class="h-full"></div>
+<body class="h-full bg-white text-ink-800 antialiased">
+  <div id="root" class="h-full">
+    <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;background:#1a451e;color:#e2fce4;font-family:Inter,system-ui,sans-serif;">
+      <div style="font-size:48px;margin-bottom:16px;">🛡️</div>
+      <div style="font-size:20px;font-weight:700;">FarmShield</div>
+      <div style="font-size:13px;margin-top:8px;color:#87d487;">Detect Early. Predict Spread. Protect Precisely.</div>
+      <div style="margin-top:24px;width:40px;height:4px;background:rgba(255,255,255,0.15);border-radius:2px;overflow:hidden;">
+        <div style="width:100%;height:100%;background:#3a9e3d;border-radius:2px;animation:loadBar 1.5s ease-in-out infinite;"></div>
+      </div>
+    </div>
+    <style>@keyframes loadBar{0%{transform:translateX(-100%)}50%{transform:translateX(0)}100%{transform:translateX(100%)}}</style>
+  </div>
 
   <script type="text/babel">
     const { useState, useEffect, useRef, useCallback, useMemo } = React;
@@ -505,7 +634,7 @@
     }
 
     /* ─────────────────── LANDING PAGE ─────────────────── */
-    function Landing({ onDemo, onFarmer, onExpert }) {
+    function Landing({ onDemo, onFarmer, onExpert, onSandbox, onLab, onTour }) {
       const [showTrust, setShowTrust] = useState(false);
       useEffect(() => { setTimeout(() => setShowTrust(true), 800); }, []);
 
@@ -535,14 +664,17 @@
               </div>
               <div className="flex items-center gap-3">
                 <span className="text-xs font-medium text-amber2-500 bg-amber2-100 px-2.5 py-1 rounded-md">Demo Mode</span>
+                <button onClick={onSandbox} className="hidden sm:block text-sm text-green-600 hover:text-green-800 font-medium">🌡️ Sandbox</button>
+                <button onClick={onLab} className="hidden sm:block text-sm text-blue-600 hover:text-blue-800 font-medium">🔬 AI Lab</button>
+                <button onClick={onTour} className="hidden sm:block text-xs font-bold bg-amber-400 text-amber-900 px-3 py-1.5 rounded-lg hover:bg-amber-500 pressable">🏆 Judge Tour</button>
                 <button onClick={onExpert} className="hidden sm:block text-sm text-ink-500 hover:text-ink-800 font-medium">Expert Console</button>
               </div>
             </div>
           </header>
 
           {/* Hero */}
-          <section className="hero-bg hero-grid">
-            <div className="relative z-10 max-w-6xl mx-auto px-5 py-16 md:py-24">
+          <section className="hero-bg hero-grid" style={{backgroundColor:"#1a451e"}}>
+            <div className="relative z-10 max-w-6xl mx-auto px-5 py-16 md:py-24" style={{color:"#fff"}}>
               <div className="text-center max-w-3xl mx-auto">
                 {/* Floating drone SVG */}
                 <div className="drone-float inline-block mb-8">
@@ -550,13 +682,13 @@
                     {I.drone('w-10 h-10 text-brand-300')}
                   </div>
                 </div>
-                <h1 className="text-4xl md:text-5xl lg:text-6xl font-black text-white leading-tight tracking-tight mb-4">
+                <h1 className="text-4xl md:text-5xl lg:text-6xl font-black leading-tight tracking-tight mb-4" style={{color:"#ffffff"}}>
                   Farm<span className="text-brand-300">Shield</span>
                 </h1>
-                <p className="text-brand-200 font-semibold text-lg md:text-xl mb-4">
+                <p className="font-semibold text-lg md:text-xl mb-4" style={{color:"#86efac"}}>
                   Detect Early. Predict Spread. Protect Precisely.
                 </p>
-                <p className="text-white/70 text-sm md:text-base max-w-xl mx-auto mb-8 leading-relaxed">
+                <p className="text-sm md:text-base max-w-xl mx-auto mb-8 leading-relaxed" style={{color:"rgba(255,255,255,0.92)"}}>
                   Autonomous AI ecosystem: aerial detection → predictive spread modeling → precision drone dispatch → exact-zone treatment. For Indian smallholder farmers.
                 </p>
 
@@ -567,16 +699,27 @@
                     {I.play('w-5 h-5')} Start Live Demo
                   </button>
                   <button onClick={onFarmer}
-                    className="w-full sm:w-auto px-8 py-4 rounded-app bg-white/10 border border-white/25 text-white font-semibold pressable hover:bg-white/20 flex items-center justify-center gap-2 transition-colors glass">
+                    className="w-full sm:w-auto px-8 py-4 rounded-app border font-semibold pressable flex items-center justify-center gap-2 transition-colors" style={{backgroundColor:"rgba(255,255,255,0.12)", borderColor:"rgba(255,255,255,0.3)", color:"#ffffff"}}>
                     Explore Farmer App
                   </button>
                 </div>
-                <p className="text-white/40 text-xs">Real CNN inference · Real database · Real timestamps · Every claim labeled</p>
+                <div className="flex flex-col sm:flex-row gap-2 justify-center mt-2">
+                  <button onClick={onSandbox} className="px-5 py-2 rounded-xl text-sm font-semibold pressable flex items-center justify-center gap-2" style={{backgroundColor:"rgba(255,255,255,0.15)", border:"1px solid rgba(255,255,255,0.25)", color:"#ffffff"}}>
+                    🌡️ Microclimate Sandbox
+                  </button>
+                  <button onClick={onLab} className="px-5 py-2 rounded-xl text-sm font-semibold pressable flex items-center justify-center gap-2" style={{backgroundColor:"rgba(37,99,235,0.3)", border:"1px solid rgba(147,197,253,0.4)", color:"#bfdbfe"}}>
+                    🔬 AI Leaf Diagnosis Lab
+                  </button>
+                  <button onClick={onTour} className="px-5 py-2 rounded-xl text-sm font-bold bg-amber-500/80 text-amber-900 hover:bg-amber-400 pressable flex items-center justify-center gap-2">
+                    🏆 Judge Pitch Tour
+                  </button>
+                </div>
+                <p className="text-xs mt-3 font-medium" style={{color:"rgba(255,255,255,0.88)"}}>✓ Real CNN inference · Real database · Real timestamps · Every claim labeled</p>
               </div>
             </div>
 
             {/* Stats strip */}
-            <div className="relative z-10 border-t border-white/10 bg-black/20 glass">
+            <div className="relative z-10 border-t border-white/10 glass" style={{backgroundColor:"rgba(13,36,16,0.9)"}}>
               <div className="max-w-6xl mx-auto px-5 py-6">
                 <div className="grid grid-cols-3 gap-4 text-center">
                   {stats.map(s => (
@@ -586,7 +729,7 @@
                         <AnimatedCounter target={s.value} suffix={s.suffix} prefix={s.prefix || ''} />
                       </div>
                       <div className="text-brand-200 text-xs font-semibold uppercase tracking-wide mt-0.5">{s.label}</div>
-                      <div className="text-white/40 text-[10px] mt-0.5">{s.desc}</div>
+                      <div className="text-white/80 text-xs mt-1 font-medium">{s.desc}</div>
                     </div>
                   ))}
                 </div>
@@ -637,6 +780,33 @@
             </div>
           </section>
 
+
+          {/* NEW: Sandbox + Lab + Judge Tour shortcuts */}
+          <section className="max-w-5xl mx-auto px-5 pb-6">
+            <h2 className="text-center text-lg font-bold text-ink-800 mb-1">World-Class Features</h2>
+            <p className="text-center text-sm text-ink-400 mb-6">Interactive tools for judges, experts, and curious minds</p>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <button onClick={onSandbox} className="group bg-gradient-to-br from-slate-900 to-slate-800 border border-slate-700 rounded-2xl p-5 text-left hover:border-green-500/50 transition-all pressable">
+                <div className="text-3xl mb-3">🌡️</div>
+                <div className="font-bold text-white text-base mb-2">Microclimate Sandbox</div>
+                <div className="text-xs text-slate-300">Drag sliders for temperature, humidity, wind. Watch spread curves + wind drift ellipses update live in real-time.</div>
+                <div className="mt-3 text-xs font-semibold text-green-300">→ Open Interactive Simulator</div>
+              </button>
+              <button onClick={onLab} className="group bg-gradient-to-br from-slate-900 to-slate-800 border border-slate-700 rounded-2xl p-5 text-left hover:border-blue-500/50 transition-all pressable">
+                <div className="text-3xl mb-3">🔬</div>
+                <div className="font-bold text-white text-base mb-2">AI Leaf Diagnosis Lab</div>
+                <div className="text-xs text-slate-300">One-click gallery of real leaf samples. Live MobileNetV2 CNN inference. Top-3 confidence bars. Bio-IPM prescriptions. Voice synthesis.</div>
+                <div className="mt-3 text-xs font-semibold text-blue-400">→ Open AI Lab</div>
+              </button>
+              <button onClick={onTour} className="group bg-gradient-to-br from-amber-950 to-amber-900 border border-amber-700 rounded-2xl p-5 text-left hover:border-amber-400/70 transition-all pressable">
+                <div className="text-3xl mb-3">🏆</div>
+                <div className="font-bold text-amber-100 text-base mb-2">Judge Pitch Tour</div>
+                <div className="text-xs text-amber-200">Guided 6-step walkthrough of FarmShield's architecture, technical depth, honest constraints, and farmer accessibility story.</div>
+                <div className="mt-3 text-xs font-semibold text-amber-400">→ Start Judge Tour</div>
+              </button>
+            </div>
+          </section>
+
           {/* Footer */}
           <footer className="border-t border-paper-200 bg-white">
             <div className="max-w-6xl mx-auto px-5 py-4 flex items-center justify-between text-sm flex-wrap gap-3">
@@ -646,14 +816,16 @@
                 <span className="text-paper-300">·</span>
                 <span>AAA-09 · HACKWELL 2.0</span>
               </div>
-              <div className="flex gap-4">
-                <button onClick={onFarmer} className="text-brand-600 font-medium hover:underline">Farmer App</button>
-                <button onClick={onDemo} className="text-brand-600 font-medium hover:underline">Live Demo</button>
-                <button onClick={onExpert} className="text-ink-500 hover:underline">Expert Console</button>
+              <div className="flex gap-3 flex-wrap">
+                <button onClick={onFarmer} className="text-brand-600 font-medium hover:underline text-xs">Farmer App</button>
+                <button onClick={onDemo} className="text-brand-600 font-medium hover:underline text-xs">Live Demo</button>
+                <button onClick={onSandbox} className="text-green-600 font-medium hover:underline text-xs">Sandbox</button>
+                <button onClick={onLab} className="text-blue-500 font-medium hover:underline text-xs">AI Lab</button>
+                <button onClick={onExpert} className="text-ink-500 hover:underline text-xs">Expert Console</button>
               </div>
             </div>
             <div className="text-center py-2 text-[10px] text-ink-400 border-t border-paper-100">
-              Prototype demonstration · All claims labeled · Detection AI is real (PlantVillage CNN) · Numbers labeled "Prototype Estimate"
+              Prototype demonstration · All claims labeled · Detection AI is real (PlantVillage CNN) · Numbers labeled "Prototype Estimate" · Hackwell 2.0 · AAA-09
             </div>
           </footer>
         </div>
@@ -1311,8 +1483,8 @@
           setStage(1);
           const obs = await api('/api/outbreaks?status=active');
           const ob = (obs||[]).find(o => o.id === conf.outbreak_id) || (obs||[])[0];
-          // also call spread calculation
-          const spread = await api(`/api/spread/calculate?temperature=29&humidity=78&wind_speed=11&base_acres=2.1`, { method:'POST' });
+          // spread/calculate is non-fatal — demo continues even if unavailable
+          const spread = await api('/api/spread/calculate', { method:'POST', body: JSON.stringify({ temperature:29, humidity:78, wind_speed:11, base_acres:2.1 }) }).catch(() => null);
           setData(d => ({ ...d, ob, spread }));
           ev('Prediction Agent', 'Degree-day logistic growth model: 29°C · 78% RH · 11 kph wind', '🌡️');
           ev('Prediction Agent', `Spread curve: 2.1 → 3.2 → 5.5 → 8.7 → 14.2 acres in 24h  [±15% band]`, '📈');
@@ -1321,10 +1493,10 @@
           // Stage 3: Select
           setStage(2);
           const sel = await api('/api/dispatch/select', { method:'POST', body: JSON.stringify({ outbreak_id: conf.outbreak_id }) });
-          if (!sel || !sel.selected) throw new Error('dispatch');
+          if (!sel || !sel.selected) throw new Error('Dispatch engine returned no candidates. Check /api/dispatch/select.');
           const cand = (sel.candidates||[]).find(c => c.id === sel.selected);
           const mission = await api('/api/missions', { method:'POST', body: JSON.stringify({ outbreak_id: conf.outbreak_id, agent_id: sel.selected }) });
-          if (!mission) throw new Error('mission');
+          if (!mission) throw new Error('Mission creation failed. Check /api/missions POST.');
           setData(d => ({ ...d, sel, cand, mission }));
           ev('Dispatch Engine', `Evaluating ${(sel.candidates||[]).length} agents — scoring by travel time × battery × payload`, '⚙️');
           ev('Dispatch Engine', `DRONE-03 selected: ${cand ? cand.distance_km : '2.3'} km · ~3 min · ${cand ? cand.battery : '100'}% battery · 6.0L payload`, '✅');
@@ -1371,7 +1543,8 @@
           setDone(true);
           await sleep(1200);
         } catch (e) {
-          setError('demo');
+          console.error('Demo error:', e.message);
+          setError(e.message || 'demo');
         } finally { setRunning(false); }
       };
 
@@ -1569,6 +1742,12 @@
       const [scanning, setScanning] = useState(false);
       const [sampleFields, setSampleFields] = useState([]);
       const [rotation, setRotation] = useState(null);
+      const [resistanceResult, setResistanceResult] = useState(null);
+      const [resistancePest, setResistancePest] = useState('Bollworm');
+      const [resistanceCrop, setResistanceCrop] = useState('Cotton');
+      const [resistanceApps, setResistanceApps] = useState(0);
+      const [waypointMission, setWaypointMission] = useState(null);
+      const [waypointData, setWaypointData] = useState(null);
       const [weather, setWeather] = useState(null);
       const [tickerText, setTickerText] = useState('');
       const logRef = useRef(null);
@@ -1659,6 +1838,8 @@
         { key:'analytics', label:'Analytics', icon:I.chart },
         { key:'rotation', label:'Chem. Rotation', icon:I.flask },
         { key:'aerial', label:'Aerial Scan', icon:I.image },
+        { key:'resistance', label:'Resistance Risk', icon:I.bug },
+        { key:'waypoints', label:'Waypoints', icon:I.drone },
       ];
 
       const Chip = ({ tone, children }) => {
@@ -1674,9 +1855,9 @@
 
       const StatCard = ({ label, value, tone='green', sub='', sparkData=null }) => (
         <div className={`${dm ? 'dark-card border rounded-app p-4' : 'bg-white border border-paper-200 rounded-app p-4 shadow-card'}`}>
-          <div className={`text-xs font-medium ${dm ? 'text-dark-400' : 'text-ink-400'}`}>{label}</div>
+          <div className={`text-xs font-medium ${dm ? 'text-green-300' : 'text-ink-400'}`}>{label}</div>
           <div className={`text-2xl font-bold mt-1 ${tone==='red' ? (dm ? 'text-red-400' : 'text-red-600') : tone==='green' ? (dm ? 'text-green-400' : 'text-brand-600') : tone==='blue' ? (dm ? 'text-blue-400' : 'text-blue-600') : (dm ? 'text-dark-400' : 'text-ink-800')}`}>{value}</div>
-          {sub && <div className={`text-xs mt-0.5 ${dm ? 'text-dark-400' : 'text-ink-400'}`}>{sub}</div>}
+          {sub && <div className={`text-xs mt-0.5 ${dm ? 'text-green-300' : 'text-ink-400'}`}>{sub}</div>}
           {sparkData && <div className="mt-2"><Sparkline data={sparkData} color={tone === 'red' ? '#dc2626' : '#3a9e3d'} /></div>}
         </div>
       );
@@ -1699,7 +1880,7 @@
             <span className={dm ? 'text-green-400' : 'text-brand-600'}>{I.shield('w-5 h-5')}</span>
             <div className="flex-1">
               <div className={`font-semibold leading-tight ${dm ? 'text-white' : 'text-ink-800'}`}>FarmShield Operations</div>
-              <div className={`text-xs leading-tight ${dm ? 'text-dark-400' : 'text-ink-400'}`}>
+              <div className={`text-xs leading-tight ${dm ? 'text-green-300' : 'text-ink-400'}`}>
                 {health ? <span className="inline-flex items-center gap-1"><span className={`w-1.5 h-1.5 rounded-full ${health.database === 'connected' ? 'bg-green-400' : 'bg-red-400'}`}></span>API {health.database}</span> : '…'}
                 <span className="mx-2 opacity-30">|</span>Demo Mode
                 {weather && <span className="ml-2">{I.thermometer('w-3 h-3 inline')} {weather.temperature_c}°C · {weather.humidity_percent}%RH</span>}
@@ -1747,24 +1928,24 @@
                     {weather && analytics && (
                       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                         <div className={`${cardClass} p-4`}>
-                          <div className={`text-xs font-medium mb-1 ${dm ? 'text-dark-400' : 'text-ink-400'}`}>Pest Risk Level</div>
+                          <div className={`text-xs font-medium mb-1 ${dm ? 'text-green-300' : 'text-ink-400'}`}>Pest Risk Level</div>
                           <div className={`text-xl font-bold ${weather.pest_risk === 'HIGH' ? (dm ? 'text-red-400' : 'text-red-600') : weather.pest_risk === 'MODERATE' ? (dm ? 'text-amber-400' : 'text-amber2-500') : (dm ? 'text-green-400' : 'text-brand-600')}`}>{weather.pest_risk}</div>
-                          <div className={`text-xs mt-0.5 ${dm ? 'text-dark-400' : 'text-ink-400'}`}>{weather.temperature_c}°C · {weather.humidity_percent}% RH</div>
+                          <div className={`text-xs mt-0.5 ${dm ? 'text-green-300' : 'text-ink-400'}`}>{weather.temperature_c}°C · {weather.humidity_percent}% RH</div>
                         </div>
                         <div className={`${cardClass} p-4`}>
-                          <div className={`text-xs font-medium mb-1 ${dm ? 'text-dark-400' : 'text-ink-400'}`}>CO₂ Saved</div>
+                          <div className={`text-xs font-medium mb-1 ${dm ? 'text-green-300' : 'text-ink-400'}`}>CO₂ Saved</div>
                           <div className={`text-xl font-bold ${dm ? 'text-green-400' : 'text-brand-600'}`}>{analytics.co2_saved_kg} kg</div>
-                          <div className={`text-xs mt-0.5 ${dm ? 'text-dark-400' : 'text-ink-400'}`}>vs. blanket tractor spray</div>
+                          <div className={`text-xs mt-0.5 ${dm ? 'text-green-300' : 'text-ink-400'}`}>vs. blanket tractor spray</div>
                         </div>
                         <div className={`${cardClass} p-4`}>
-                          <div className={`text-xs font-medium mb-1 ${dm ? 'text-dark-400' : 'text-ink-400'}`}>Pesticide Saved</div>
+                          <div className={`text-xs font-medium mb-1 ${dm ? 'text-green-300' : 'text-ink-400'}`}>Pesticide Saved</div>
                           <div className={`text-xl font-bold ${dm ? 'text-green-400' : 'text-brand-600'}`}>{analytics.pesticide_savings_percent}%</div>
-                          <div className={`text-xs mt-0.5 ${dm ? 'text-dark-400' : 'text-ink-400'}`}>{analytics.estimated_pesticide_saved_l} L saved</div>
+                          <div className={`text-xs mt-0.5 ${dm ? 'text-green-300' : 'text-ink-400'}`}>{analytics.estimated_pesticide_saved_l} L saved</div>
                         </div>
                         <div className={`${cardClass} p-4`}>
-                          <div className={`text-xs font-medium mb-1 ${dm ? 'text-dark-400' : 'text-ink-400'}`}>Yield Protected</div>
+                          <div className={`text-xs font-medium mb-1 ${dm ? 'text-green-300' : 'text-ink-400'}`}>Yield Protected</div>
                           <div className={`text-xl font-bold ${dm ? 'text-blue-400' : 'text-blue-600'}`}>₹{(analytics.yield_protected_inr/1000).toFixed(0)}K</div>
-                          <div className={`text-xs mt-0.5 ${dm ? 'text-dark-400' : 'text-ink-400'}`}>Prototype Estimate</div>
+                          <div className={`text-xs mt-0.5 ${dm ? 'text-green-300' : 'text-ink-400'}`}>Prototype Estimate</div>
                         </div>
                       </div>
                     )}
@@ -1776,12 +1957,12 @@
                         {activeObs.length > 0 && <Chip tone="red">{activeObs.length} open</Chip>}
                       </div>
                       {activeObs.length === 0 ? (
-                        <div className={`px-5 py-8 text-center text-sm ${dm ? 'text-dark-400' : 'text-ink-400'}`}>No active outbreaks. All fields clear. 🟢</div>
+                        <div className={`px-5 py-8 text-center text-sm ${dm ? 'text-green-300' : 'text-ink-400'}`}>No active outbreaks. All fields clear. 🟢</div>
                       ) : activeObs.map(o => (
                         <div key={o.id} className={`px-5 py-4 flex items-center justify-between gap-4 border-b last:border-0 ${dm ? 'dark-border' : 'border-paper-100'}`}>
                           <div>
                             <div className={`font-medium ${dm ? 'text-white' : 'text-ink-800'}`}>{o.crop} · Possible {o.pest}</div>
-                            <div className={`text-xs mt-0.5 ${dm ? 'text-dark-400' : 'text-ink-400'}`}>OUT-{String(o.id).padStart(4,'0')} · {o.affected_area_acres} acres · {o.predictions && o.predictions.length ? `→ ${o.predictions[o.predictions.length-1].area} acres in 24h` : ''}</div>
+                            <div className={`text-xs mt-0.5 ${dm ? 'text-green-300' : 'text-ink-400'}`}>OUT-{String(o.id).padStart(4,'0')} · {o.affected_area_acres} acres · {o.predictions && o.predictions.length ? `→ ${o.predictions[o.predictions.length-1].area} acres in 24h` : ''}</div>
                           </div>
                           <div className="flex items-center gap-3">
                             <Chip tone="red">High risk</Chip>
@@ -1801,7 +1982,7 @@
                               <span className={dm ? 'text-dark-400' : 'text-ink-400'}>{a.agent_type === 'DRONE' ? I.drone('w-5 h-5') : I.settings('w-5 h-5')}</span>
                               <div>
                                 <div className={`font-medium text-sm ${dm ? 'text-white' : 'text-ink-800'}`}>{a.name}</div>
-                                <div className={`text-xs ${dm ? 'text-dark-400' : 'text-ink-400'}`}>{a.agent_type} · {a.missions_completed} mission{a.missions_completed === 1 ? '' : 's'}</div>
+                                <div className={`text-xs ${dm ? 'text-green-300' : 'text-ink-400'}`}>{a.agent_type} · {a.missions_completed} mission{a.missions_completed === 1 ? '' : 's'}</div>
                               </div>
                             </div>
                             <div className="flex items-center gap-4">
@@ -1852,14 +2033,14 @@
                             <p className={`text-xs font-semibold ${dm ? 'text-dark-400' : 'text-ink-500'}`}>Spread forecast:</p>
                             {o.predictions.map(p => (
                               <div key={p.hours} className="flex items-center gap-3 text-xs">
-                                <span className={`w-14 ${dm ? 'text-dark-400' : 'text-ink-400'}`}>{p.hours === 0 ? 'Now' : `+${p.hours}h`}</span>
+                                <span className={`w-14 ${dm ? 'text-green-300' : 'text-ink-400'}`}>{p.hours === 0 ? 'Now' : `+${p.hours}h`}</span>
                                 <div className={`flex-1 h-3 rounded overflow-hidden ${dm ? 'bg-dark-600' : 'bg-paper-100'}`}>
                                   <div className="h-full bg-amber-500/70" style={{ width: `${Math.min(p.area/15*100,100)}%` }}></div>
                                 </div>
                                 <span className={`w-16 text-right font-medium ${dm ? 'text-dark-300' : 'text-ink-700'}`}>{p.area} ac</span>
                               </div>
                             ))}
-                            <p className={`text-[10px] pt-1 ${dm ? 'text-dark-400' : 'text-ink-400'}`}>Prototype AI Simulation</p>
+                            <p className={`text-[10px] pt-1 ${dm ? 'text-green-300' : 'text-ink-400'}`}>Prototype AI Simulation</p>
                           </div>
                         )}
                       </div>
@@ -1874,7 +2055,7 @@
                       <div key={m.id} className={`${cardClass} p-4 flex items-center justify-between gap-4`}>
                         <div>
                           <div className={`font-medium ${dm ? 'text-white' : 'text-ink-800'}`}>{m.mission_code} · {m.agent_name}</div>
-                          <div className={`text-xs mt-0.5 ${dm ? 'text-dark-400' : 'text-ink-400'}`}>{m.outbreak_pest} · {m.target_area_acres} acres · {m.precision_chemical_l}L precision (vs {m.estimated_chemical_l}L blanket)</div>
+                          <div className={`text-xs mt-0.5 ${dm ? 'text-green-300' : 'text-ink-400'}`}>{m.outbreak_pest} · {m.target_area_acres} acres · {m.precision_chemical_l}L precision (vs {m.estimated_chemical_l}L blanket)</div>
                         </div>
                         <div className="flex items-center gap-2">
                           <Chip tone={m.status==='completed'?'green':m.status==='aborted'?'gray':'amber'}>{m.status}</Chip>
@@ -1901,8 +2082,8 @@
                               <span className={dm ? 'text-dark-400' : 'text-ink-400'}>{a.agent_type === 'DRONE' ? I.drone('w-5 h-5') : I.settings('w-5 h-5')}</span>
                               <div>
                                 <div className={`font-medium text-sm ${dm ? 'text-white' : 'text-ink-800'}`}>{a.name}</div>
-                                <div className={`text-xs ${dm ? 'text-dark-400' : 'text-ink-400'}`}>{a.agent_type} · {a.speed_kmh} km/h · {a.payload_capacity_l}L payload · {a.missions_completed} missions done</div>
-                                <div className={`text-xs mt-0.5 ${dm ? 'text-dark-400' : 'text-ink-400'}`}>Treats: {(a.treatment_compatibility||[]).join(', ')}</div>
+                                <div className={`text-xs ${dm ? 'text-green-300' : 'text-ink-400'}`}>{a.agent_type} · {a.speed_kmh} km/h · {a.payload_capacity_l}L payload · {a.missions_completed} missions done</div>
+                                <div className={`text-xs mt-0.5 ${dm ? 'text-green-300' : 'text-ink-400'}`}>Treats: {(a.treatment_compatibility||[]).join(', ')}</div>
                               </div>
                             </div>
                             <div className="flex flex-col items-end gap-2">
@@ -1963,7 +2144,7 @@
                       <StatCard label="Yield protected" value={analytics.yield_protected_inr > 0 ? `₹${(analytics.yield_protected_inr/1000).toFixed(0)}K` : '—'} sub="Prototype Estimate" tone="green" />
                       <StatCard label="Pesticide saved" value={`${analytics.estimated_pesticide_saved_l} L`} sub="from precision dosing" tone="green" />
                     </div>
-                    <p className={`text-xs ${dm ? 'text-dark-400' : 'text-ink-400'}`}>Prototype estimates computed from stored demo data. Numbers labeled "Prototype Estimate" are model-computed, not field-validated.</p>
+                    <p className={`text-xs ${dm ? 'text-green-300' : 'text-ink-400'}`}>Prototype estimates computed from stored demo data. Numbers labeled "Prototype Estimate" are model-computed, not field-validated.</p>
                   </div>
                 )}
 
@@ -1987,8 +2168,8 @@
                           {r.irac_groups.map((g, j) => (
                             <div key={j} className={`rounded-lg p-3 ${dm ? 'bg-dark-700' : 'bg-paper-50'}`}>
                               <div className={`font-semibold text-sm ${dm ? 'text-green-400' : 'text-brand-600'}`}>{r.chemicals[j]}</div>
-                              <div className={`text-xs mt-0.5 ${dm ? 'text-dark-400' : 'text-ink-400'}`}>{g}</div>
-                              <div className={`text-xs mt-1 ${dm ? 'text-dark-400' : 'text-ink-400'}`}>PHI: {r.preharvest_interval_days[j]} days</div>
+                              <div className={`text-xs mt-0.5 ${dm ? 'text-green-300' : 'text-ink-400'}`}>{g}</div>
+                              <div className={`text-xs mt-1 ${dm ? 'text-green-300' : 'text-ink-400'}`}>PHI: {r.preharvest_interval_days[j]} days</div>
                             </div>
                           ))}
                         </div>
@@ -2014,6 +2195,174 @@
                       if (r) { alert('Outbreak confirmed: OUT-' + String(r.outbreak_id).padStart(4,'0')); load(); }
                     }} />
                 )}
+
+                {/* RESISTANCE RISK EVALUATOR */}
+                {page === 'resistance' && (
+                  <div className="p-5 max-w-4xl space-y-5">
+                    <div>
+                      <h2 className={`text-lg font-bold ${dm ? 'text-white' : 'text-ink-800'}`}>IRAC Resistance Risk Evaluator</h2>
+                      <p className={`text-sm mt-1 ${dm ? 'text-green-300' : 'text-ink-600'}`}>Evaluates pesticide resistance risk and recommends Beauveria, Bt, Neem bio-alternatives based on consecutive application count.</p>
+                    </div>
+                    <div className={`${cardClass} p-5 space-y-4`}>
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        <div>
+                          <label className={`text-xs font-semibold block mb-1.5 ${dm ? 'text-dark-300' : 'text-ink-500'}`}>Pest</label>
+                          <select value={resistancePest} onChange={e => setResistancePest(e.target.value)}
+                            className={`w-full text-sm rounded-lg px-3 py-2 border ${dm ? 'bg-dark-800 border-dark-600 text-white' : 'bg-white border-paper-300 text-ink-800'}`}>
+                            {['Bollworm','Stem Borer','Aphid Cluster'].map(p => <option key={p} value={p}>{p}</option>)}
+                          </select>
+                        </div>
+                        <div>
+                          <label className={`text-xs font-semibold block mb-1.5 ${dm ? 'text-dark-300' : 'text-ink-500'}`}>Crop</label>
+                          <select value={resistanceCrop} onChange={e => setResistanceCrop(e.target.value)}
+                            className={`w-full text-sm rounded-lg px-3 py-2 border ${dm ? 'bg-dark-800 border-dark-600 text-white' : 'bg-white border-paper-300 text-ink-800'}`}>
+                            {['Cotton','Rice','Wheat','Chilli','Tomato'].map(c => <option key={c} value={c}>{c}</option>)}
+                          </select>
+                        </div>
+                        <div>
+                          <label className={`text-xs font-semibold block mb-1.5 ${dm ? 'text-dark-300' : 'text-ink-500'}`}>Consecutive Applications</label>
+                          <input type="number" min="0" max="10" value={resistanceApps}
+                            onChange={e => setResistanceApps(parseInt(e.target.value)||0)}
+                            className={`w-full text-sm rounded-lg px-3 py-2 border ${dm ? 'bg-dark-800 border-dark-600 text-white' : 'bg-white border-paper-300 text-ink-800'}`} />
+                        </div>
+                      </div>
+                      <button onClick={async () => {
+                        const d = await api('/api/chemical-rotation/evaluate?pest='+encodeURIComponent(resistancePest)+'&crop='+encodeURIComponent(resistanceCrop)+'&consecutive_applications='+resistanceApps);
+                        if (d) setResistanceResult(d);
+                      }} className={`px-6 py-2.5 rounded-lg font-semibold text-sm ${dm ? 'bg-green-700 hover:bg-green-600 text-white' : 'bg-brand-600 hover:bg-brand-700 text-white'} pressable`}>
+                        Evaluate Resistance Risk
+                      </button>
+                    </div>
+
+                    {resistanceResult && (
+                      <div className="space-y-4">
+                        <div className={`${cardClass} p-4`}>
+                          <div className="flex items-center justify-between mb-3">
+                            <span className={`font-bold ${dm ? 'text-white' : 'text-ink-800'}`}>Risk Assessment</span>
+                            <Chip tone={resistanceResult.resistance_risk_level==='CRITICAL'||resistanceResult.resistance_risk_level==='HIGH'?'red':resistanceResult.resistance_risk_level==='MODERATE'?'amber':'green'}>
+                              {resistanceResult.resistance_risk_level} ({resistanceResult.resistance_risk_score}%)
+                            </Chip>
+                          </div>
+                          <div className={`h-3 rounded-full overflow-hidden mb-3 ${dm ? 'bg-dark-600' : 'bg-paper-200'}`}>
+                            <div className="h-full rounded-full transition-all duration-1000"
+                              style={{width: resistanceResult.resistance_risk_score+'%',
+                                background: resistanceResult.resistance_risk_score>=80?'#ef4444':resistanceResult.resistance_risk_score>=60?'#f59e0b':'#22c55e'}} />
+                          </div>
+                          <p className={`text-sm font-semibold ${dm ? 'text-green-300' : 'text-brand-700'}`}>{resistanceResult.recommendation}</p>
+                        </div>
+                        <div className={`${cardClass} p-4`}>
+                          <div className={`font-semibold mb-3 ${dm ? 'text-white' : 'text-ink-800'}`}>Bio-Alternatives (IPM)</div>
+                          <div className="space-y-2">
+                            {(resistanceResult.bio_alternatives||[]).map((b,i) => (
+                              <div key={i} className={`rounded-lg p-3 flex items-start gap-3 ${dm ? 'bg-green-900/20 border border-green-800/30' : 'bg-brand-50 border border-brand-100'}`}>
+                                <span className="text-xl">🌿</span>
+                                <div>
+                                  <div className={`font-semibold text-sm ${dm ? 'text-green-300' : 'text-brand-800'}`}>{b.name}</div>
+                                  <div className={`text-xs mt-0.5 font-medium ${dm ? 'text-green-300' : 'text-ink-500'}`}>{b.dose} · {b.mode} · PHI: {b.preharvest_days} days</div>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* WAYPOINTS GENERATOR */}
+                {page === 'waypoints' && (
+                  <div className="p-5 max-w-5xl space-y-5">
+                    <div>
+                      <h2 className={`text-lg font-bold ${dm ? 'text-white' : 'text-ink-800'}`}>Drone Lawnmower Spray Waypoints</h2>
+                      <p className={`text-sm mt-1 ${dm ? 'text-dark-400' : 'text-ink-500'}`}>Select an active mission to generate the precise lawnmower spray path. Shows GPS waypoints, sweep count, spray time, chemical volume, and % savings vs blanket spray.</p>
+                    </div>
+                    <div className={`${cardClass} p-4`}>
+                      <p className={`text-xs font-semibold mb-2 ${dm ? 'text-dark-300' : 'text-ink-500'}`}>Select Mission</p>
+                      <div className="flex gap-2 flex-wrap">
+                        {missions.filter(m => !['completed','aborted'].includes(m.status)).map(m => (
+                          <button key={m.id} onClick={async () => {
+                            setWaypointMission(m);
+                            const d = await api('/api/missions/'+m.id+'/waypoints');
+                            if (d) setWaypointData(d);
+                          }} className={`px-4 py-2 rounded-lg text-sm font-semibold pressable ${waypointMission?.id===m.id ? (dm?'bg-green-700 text-white':'bg-brand-600 text-white') : (dm?'bg-dark-700 text-dark-300 hover:bg-dark-600':'bg-white border border-paper-300 text-ink-600 hover:bg-paper-50')}`}>
+                            {m.mission_code}
+                          </button>
+                        ))}
+                        {missions.filter(m => !['completed','aborted'].includes(m.status)).length === 0 && (
+                          <p className={`text-sm ${dm?'text-dark-400':'text-ink-400'}`}>No active missions. Create an outbreak dispatch first.</p>
+                        )}
+                      </div>
+                    </div>
+                    {waypointData && (
+                      <div className="space-y-4">
+                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                          {[
+                            {label:'Sweeps', value: waypointData.num_sweeps+''},
+                            {label:'Path Length', value: Math.round(waypointData.total_path_length_m)+'m'},
+                            {label:'Chemical', value: waypointData.chemical_volume_l+'L'},
+                            {label:'Savings', value: waypointData.savings_pct+'%'},
+                          ].map(s => (
+                            <div key={s.label} className={`${cardClass} p-3 text-center`}>
+                              <div className={`text-xl font-black ${dm ? 'text-green-400' : 'text-brand-600'}`}>{s.value}</div>
+                              <div className={`text-xs mt-0.5 ${dm?'text-dark-400':'text-ink-400'}`}>{s.label}</div>
+                            </div>
+                          ))}
+                        </div>
+                        <div className={`${cardClass} p-4`}>
+                          <p className={`font-semibold mb-3 text-sm ${dm ? 'text-white' : 'text-ink-800'}`}>Lawnmower Path — {waypointData.mission_code}</p>
+                          {(() => {
+                            const bb = waypointData.bounding_box;
+                            const wpts = waypointData.waypoints;
+                            const oc = waypointData.outbreak_center;
+                            if (!bb || !wpts || wpts.length < 2) return <p className="text-xs text-dark-400">No waypoints available</p>;
+                            const W = 500, H = 200, px = 24, py = 16;
+                            const latR = bb.lat_max - bb.lat_min || 0.001;
+                            const lonR = bb.lon_max - bb.lon_min || 0.001;
+                            const X = lon => px + ((lon - bb.lon_min) / lonR) * (W - 2*px);
+                            const Y = lat => py + ((bb.lat_max - lat) / latR) * (H - 2*py);
+                            const pairs = [];
+                            for (let i = 0; i < wpts.length-1; i+=2) pairs.push([wpts[i], wpts[i+1]]);
+                            return (
+                              <svg viewBox={'0 0 '+W+' '+H} width="100%" style={{background: dm?'#0d1117':'#f8f8f4', borderRadius:8}}>
+                                <rect x={X(bb.lon_min)} y={Y(bb.lat_max)} width={X(bb.lon_max)-X(bb.lon_min)} height={Y(bb.lat_min)-Y(bb.lat_max)}
+                                  fill="rgba(34,197,94,0.06)" stroke={dm?'#22c55e':'#3a9e3d'} strokeWidth="1" strokeDasharray="4 2" />
+                                {pairs.map(([a,b],i) => (
+                                  <line key={i} x1={X(a.lon)} y1={Y(a.lat)} x2={X(b.lon)} y2={Y(b.lat)}
+                                    stroke={dm?'#3b82f6':'#2563eb'} strokeWidth="1.5" strokeDasharray="3 3">
+                                    <animate attributeName="stroke-dashoffset" from="0" to="-12" dur="0.8s" repeatCount="indefinite" />
+                                  </line>
+                                ))}
+                                {wpts[0] && <circle cx={X(wpts[0].lon)} cy={Y(wpts[0].lat)} r="5" fill="#22c55e" />}
+                                {oc && <circle cx={X(oc.lon)} cy={Y(oc.lat)} r="7" fill="rgba(239,68,68,0.35)" stroke="#ef4444" strokeWidth="1.5"/>}
+                                <text x={X(bb.lon_min)+3} y={Y(bb.lat_max)+12} fill='#4ade80' fontSize='10' fontWeight='bold'>START</text>
+                                {oc && <text x={X(oc.lon)+10} y={Y(oc.lat)+4} fill='#f87171' fontSize='10' fontWeight='bold'>OUTBREAK</text>}
+                              </svg>
+                            );
+                          })()}
+                          <div className="flex gap-5 mt-3 text-xs flex-wrap">
+                            <span className={`flex items-center gap-1.5 ${dm?'text-dark-400':'text-ink-400'}`}><span className="w-5 border-t-2 border-dashed border-blue-400 inline-block"></span>Spray sweep</span>
+                            <span className={`flex items-center gap-1.5 ${dm?'text-dark-400':'text-ink-400'}`}><span className="w-3 h-3 rounded-full bg-green-500 inline-block"></span>Drone start</span>
+                            <span className={`flex items-center gap-1.5 ${dm?'text-dark-400':'text-ink-400'}`}><span className="w-3 h-3 rounded-full bg-red-500 inline-block"></span>Outbreak</span>
+                          </div>
+                        </div>
+                        <div className={`${cardClass} p-4`}>
+                          <p className={`font-semibold mb-2 text-sm ${dm ? 'text-white' : 'text-ink-800'}`}>Spray Parameters</p>
+                          <div className="grid grid-cols-2 sm:grid-cols-3 gap-y-2 gap-x-4 text-xs">
+                            {[['Mission',waypointData.mission_code],['Altitude',waypointData.altitude_m+'m'],['Swath',waypointData.swath_width_m+'m'],
+                              ['Spray Time',waypointData.spray_time_min+' min'],['Blanket Equiv.',waypointData.blanket_volume_l+'L'],['Precision',waypointData.chemical_volume_l+'L']].map(([k,v]) => (
+                              <div key={k} className="flex gap-2">
+                                <span className={dm?'text-dark-400':'text-ink-400'}>{k}:</span>
+                                <span className={`font-semibold ${dm?'text-green-300':'text-brand-700'}`}>{v}</span>
+                              </div>
+                            ))}
+                          </div>
+                          <p className={`text-[10px] mt-3 ${dm?'text-dark-400':'text-ink-400'}`}>Prototype lawnmower path. Production: DGCA-compliant geofenced polygon scan.</p>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+
               </main>
 
               {/* Event ticker */}
@@ -2090,7 +2439,7 @@
                 <button key={s.name} onClick={() => runSample(s)} disabled={scanning}
                   className={`text-left p-3 rounded-app border transition-all pressable ${selectedSample === s.name ? (dm ? 'border-green-500 bg-green-900/20' : 'border-brand-400 bg-brand-50') : (dm ? 'border-dark-500 hover:border-green-600 hover:bg-dark-600' : 'border-paper-200 hover:border-brand-300 hover:bg-paper-50')} disabled:opacity-50`}>
                   <div className={`font-medium text-sm ${dm ? 'text-white' : 'text-ink-700'}`}>{s.name.replace(/_/g, ' ').replace(/\.jpg$/, '')}</div>
-                  <div className={`text-xs mt-0.5 ${dm ? 'text-dark-400' : 'text-ink-400'}`}>{s.description}</div>
+                  <div className={`text-xs mt-0.5 ${dm ? 'text-green-300' : 'text-ink-400'}`}>{s.description}</div>
                 </button>
               ))}
             </div>
@@ -2134,7 +2483,7 @@
 
               {scanResult.tiles && (
                 <div>
-                  <p className={`text-xs mb-1 ${dm ? 'text-dark-400' : 'text-ink-400'}`}>Per-tile heatmap ({scanResult.grid}×{scanResult.grid} = {scanResult.total_tiles} tiles)</p>
+                  <p className={`text-xs mb-1 ${dm ? 'text-green-300' : 'text-ink-400'}`}>Per-tile heatmap ({scanResult.grid}×{scanResult.grid} = {scanResult.total_tiles} tiles)</p>
                   <div className="inline-grid gap-px" style={{gridTemplateColumns: `repeat(${scanResult.grid}, 1fr)`}}>
                     {scanResult.tiles.map((t, i) => (
                       <div key={i} className={`w-6 h-6 rounded-sm text-[7px] flex items-center justify-center font-bold ${t.hot ? 'bg-red-500 text-white' : t.healthy ? 'bg-brand-200 text-brand-800' : 'bg-amber2-100 text-amber2-500'}`}
@@ -2177,7 +2526,7 @@
                 </div>
               )}
 
-              <p className={`text-xs ${dm ? 'text-dark-400' : 'text-ink-400'}`}>Real CNN inference (PlantVillage MobileNetV2, 38 classes) — not a simulation. Aerial accuracy limited: leaf-level model applied to field imagery. Production: multispectral aerial model.</p>
+              <p className={`text-xs ${dm ? 'text-green-300' : 'text-ink-400'}`}>Real CNN inference (PlantVillage MobileNetV2, 38 classes) — not a simulation. Aerial accuracy limited: leaf-level model applied to field imagery. Production: multispectral aerial model.</p>
             </div>
           )}
         </div>
@@ -2185,22 +2534,577 @@
     }
 
     /* ─────────────────── ROOT ─────────────────── */
+
+    /* ═══════════════════════════════════════════════════════════
+       WORLD-CLASS NEW COMPONENTS — FarmShield Enterprise v3.0
+    ═══════════════════════════════════════════════════════════ */
+
+    /* ── AgTech Status Header ── */
+    function AgTechHeader({ onBack, title, badge }) {
+      return (
+        <div className="agtech-card border-b flex items-center justify-between px-5 py-3 sticky top-0 z-50">
+          <div className="flex items-center gap-3">
+            {onBack && <button onClick={onBack} className="text-agtech-accent p-1.5 rounded-lg hover:bg-white/5 pressable">{I.arrowLeft('w-5 h-5 text-green-400')}</button>}
+            <div className="text-brand-300">{I.shield('w-5 h-5')}</div>
+            <span className="font-bold text-white text-sm">{title}</span>
+            {badge && <span className="badge-online">{badge}</span>}
+          </div>
+          <div className="flex items-center gap-3 text-xs">
+            <span className="badge-online">AI: ONLINE ✓</span>
+            <span style={{color:'#d8f0db'}} className="hidden sm:block">MobileNetV2 · 38 classes</span>
+          </div>
+        </div>
+      );
+    }
+
+    /* ── Confidence Bars (Top-3 CNN results) ── */
+    function ConfidenceBars({ top3, animate }) {
+      if (!top3 || !top3.length) return null;
+      const colors = ['#22c55e', '#3b82f6', '#f59e0b'];
+      return (
+        <div className="space-y-2.5">
+          {top3.map((item, i) => (
+            <div key={i}>
+              <div className="flex items-center justify-between mb-1">
+                <span className="text-xs font-medium truncate" style={{color: item.healthy ? '#4ade80' : '#f87171', fontWeight:600, maxWidth:'75%', letterSpacing:'-0.01em'}}>
+                  {item.healthy ? '✓ Healthy' : (item.pest || item.label || 'Unknown')}
+                </span>
+                <span className="text-xs font-bold" style={{color: colors[i]}}>{(item.confidence*100).toFixed(1)}%</span>
+              </div>
+              <div className="h-2 rounded-full overflow-hidden" style={{background:'rgba(255,255,255,0.07)'}}>
+                <div className="h-full rounded-full conf-bar"
+                  style={{'--bar-w': `${item.confidence*100}%`, width:`${item.confidence*100}%`, background: colors[i]}} />
+              </div>
+            </div>
+          ))}
+        </div>
+      );
+    }
+
+    /* ═══════════════════════════════════════════════════════════
+       AI LEAF DIAGNOSIS LAB
+    ═══════════════════════════════════════════════════════════ */
+    function AILeafLab({ onBack }) {
+      const [samples, setSamples] = useState([]);
+      const [selected, setSelected] = useState(null);
+      const [result, setResult] = useState(null);
+      const [scanning, setScanning] = useState(false);
+      const [uploadResult, setUploadResult] = useState(null);
+      const [uploadScanning, setUploadScanning] = useState(false);
+      const [speakLang, setSpeakLang] = useState('en-IN');
+
+      useEffect(() => { api('/api/detection/leaf-samples').then(d => { if (d) setSamples(d); }); }, []);
+
+      const analyze = async (sample) => {
+        setSelected(sample); setResult(null); setScanning(true);
+        const res = await fetch('/api/detection/leaf-samples/' + sample.id + '/analyze', { method: 'POST' });
+        const data = res.ok ? await res.json() : null;
+        setResult(data); setScanning(false);
+        if (data && window.speechSynthesis) {
+          const msg = data.healthy
+            ? `Crop looks healthy. ${data.crop}. Confidence ${(data.confidence*100).toFixed(0)} percent.`
+            : data.possible_pest
+              ? `Warning. Possible ${data.possible_pest} detected on ${data.crop}. Confidence ${(data.confidence*100).toFixed(0)} percent. Risk: ${data.risk}.`
+              : 'Photo not clear enough. Please try a closer shot.';
+          const u = new SpeechSynthesisUtterance(msg);
+          u.lang = speakLang; window.speechSynthesis.cancel(); window.speechSynthesis.speak(u);
+        }
+      };
+
+      const analyzeUpload = async (file) => {
+        setUploadScanning(true); setUploadResult(null);
+        const fd = new FormData(); fd.append('file', file); fd.append('crop', 'Cotton');
+        const res = await fetch('/api/detection/analyze-image', { method: 'POST', body: fd });
+        const data = res.ok ? await res.json() : null;
+        setUploadResult(data); setUploadScanning(false);
+      };
+
+      const speakResult = (r) => {
+        if (!window.speechSynthesis) return;
+        const msg = r.healthy ? `Crop looks healthy. ${r.crop}.`
+          : r.possible_pest ? `Possible ${r.possible_pest} on ${r.crop}. ${r.risk} risk.`
+          : 'Photo unclear. Please take a closer photo.';
+        const u = new SpeechSynthesisUtterance(msg);
+        u.lang = speakLang; window.speechSynthesis.cancel(); window.speechSynthesis.speak(u);
+      };
+
+      const LANG_VOICES = [
+        { code: 'en-IN', label: '🇮🇳 English' }, { code: 'hi-IN', label: '🇮🇳 Hindi' },
+        { code: 'ta-IN', label: '🇮🇳 Tamil' }, { code: 'te-IN', label: '🇮🇳 Telugu' },
+      ];
+
+      const icons = { tomato:'🍅', leaf:'🌿', potato:'🥔', microscope:'🔬' };
+
+      return (
+        <div className="agtech-bg agtech-grid min-h-screen text-green-100" style={{backgroundColor:'#040d08',color:'#e2fce4'}}>
+          <AgTechHeader onBack={onBack} title="AI Leaf Diagnosis Lab" badge="REAL CNN · MobileNetV2" />
+
+          <div className="max-w-5xl mx-auto px-4 py-6 space-y-6">
+
+            {/* Voice lang selector */}
+            <div className="agtech-card rounded-2xl p-4 flex items-center gap-4 flex-wrap">
+              <div className="flex items-center gap-2">{I.volume('w-4 h-4 text-green-400')}<span className="text-xs font-semibold text-green-300">Voice Output Language</span></div>
+              <div className="flex gap-2 flex-wrap">
+                {LANG_VOICES.map(l => (
+                  <button key={l.code} onClick={() => setSpeakLang(l.code)}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold pressable transition-all ${speakLang===l.code ? 'bg-green-500 text-white' : 'bg-white/10 text-white hover:bg-white/20'}`}>
+                    {l.label}
+                  </button>
+                ))}
+              </div>
+              <span className="text-xs font-medium" style={{color:'#d8f0db'}}>Click any sample — the diagnosis will be spoken aloud in your language</span>
+            </div>
+
+            {/* Gallery + Result */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+              {/* Sample gallery */}
+              <div className="space-y-4">
+                <h2 className="font-bold text-green-200 flex items-center gap-2">
+                  {I.image('w-4 h-4 text-green-400')} Curated Leaf Sample Gallery
+                  <span className="badge-online">REAL INFERENCE</span>
+                </h2>
+                <p className="text-xs font-medium" style={{color:'#d8f0db'}}>Each image runs the actual PlantVillage MobileNetV2 ONNX model via OpenCV DNN. Zero simulation — real probabilities.</p>
+                <div className="grid grid-cols-2 gap-3">
+                  {samples.map(s => (
+                    <button key={s.id} onClick={() => analyze(s)} disabled={scanning}
+                      className={`agtech-card rounded-xl p-4 text-left pressable transition-all hover:border-green-500/50 ${selected?.id === s.id ? 'border-green-400/60 shadow-lg' : ''} disabled:opacity-50`}>
+                      <div className="text-3xl mb-2">{icons[s.icon] || '🌿'}</div>
+                      <div className="font-semibold text-sm text-green-200">{s.crop}</div>
+                      <div className={`text-xs mt-0.5 font-medium ${s.disease ? 'text-red-400' : 'text-green-400'}`}>
+                        {s.disease || '✓ Healthy'}
+                      </div>
+                      <div className="text-xs mt-1.5" style={{color:'#d8f0db'}} >{s.description}</div>
+                      {selected?.id === s.id && scanning && (
+                        <div className="mt-2 h-0.5 bg-green-900 rounded overflow-hidden relative"><div className="scan-beam" /></div>
+                      )}
+                    </button>
+                  ))}
+                </div>
+
+                {/* Upload own image */}
+                <div className="agtech-card rounded-xl p-4">
+                  <label className="cursor-pointer block">
+                    <div className="border-2 border-dashed border-green-800 rounded-xl p-6 text-center hover:border-green-500 transition-colors">
+                      {uploadScanning ? (
+                        <div className="text-green-400 text-sm font-semibold animate-pulse">🔍 Running CNN inference...</div>
+                      ) : (
+                        <>
+                          {I.uploadCloud('w-8 h-8 text-green-600 mx-auto mb-2')}
+                          <div className="text-sm font-semibold text-green-200">Upload Your Own Leaf Photo</div>
+                          <div className="text-xs mt-1" style={{color:'#d8f0db'}}>JPG/PNG · Any crop · Real MobileNetV2 inference</div>
+                        </>
+                      )}
+                    </div>
+                    <input type="file" accept="image/*" className="hidden" onChange={e => { const f = e.target.files?.[0]; if (f) analyzeUpload(f); }} />
+                  </label>
+                  {uploadResult && (
+                    <div className="mt-3 p-3 rounded-lg" style={{background:'rgba(34,197,94,0.06)', border:'1px solid rgba(34,197,94,0.2)'}}>
+                      <div className={`font-bold text-sm ${uploadResult.healthy ? 'text-green-400' : 'text-red-400'}`}>
+                        {uploadResult.healthy ? '✓ Crop Healthy' : uploadResult.possible_pest ? `⚠ ${uploadResult.possible_pest}` : 'ℹ Photo Unclear'}
+                      </div>
+                      <div className="text-xs mt-1" style={{color:'#d8f0db'}}>{uploadResult.crop} · {(uploadResult.confidence*100).toFixed(0)}% confidence · {uploadResult.mode}</div>
+                      <button onClick={() => speakResult(uploadResult)} className="mt-2 text-xs text-green-400 hover:text-green-300 flex items-center gap-1">
+                        {I.volume('w-3 h-3')} Speak result
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Result panel */}
+              <div className="space-y-4">
+                <h2 className="font-bold text-green-200 flex items-center gap-2">{I.flask('w-4 h-4 text-blue-400')} Diagnosis Output</h2>
+                {!result && !scanning && (
+                  <div className="agtech-card rounded-2xl p-8 text-center">
+                    <div className="text-5xl mb-4">🔬</div>
+                    <div className="text-green-200 font-bold text-base">Select a leaf sample to begin analysis</div>
+                    <div className="text-sm mt-2" style={{color:'#d8f0db'}}>Results include Top-3 CNN predictions, IPM prescription, and bio-alternative recommendations</div>
+                  </div>
+                )}
+                {scanning && (
+                  <div className="agtech-card rounded-2xl p-8 text-center">
+                    <div className="w-16 h-16 rounded-full border-2 border-green-500 flex items-center justify-center mx-auto mb-4 relative">
+                      <div className="text-3xl">{icons[selected?.icon] || '🌿'}</div>
+                      <div className="scan-beam absolute" />
+                    </div>
+                    <div className="text-green-200 font-bold animate-pulse text-base">Running MobileNetV2 CNN...</div>
+                    <div className="text-xs mt-2" style={{color:'#d8f0db'}}>Real-time inference · 38 PlantVillage classes · OpenCV DNN</div>
+                  </div>
+                )}
+                {result && !scanning && (
+                  <div className="agtech-card rounded-2xl p-5 space-y-5">
+                    {/* Verdict */}
+                    <div className={`rounded-xl p-4 text-center ${result.healthy ? 'bg-green-500/10 border border-green-500/30' : 'bg-red-500/10 border border-red-500/30'}`}>
+                      <div className="text-4xl mb-2">{result.healthy ? '✅' : '⚠️'}</div>
+                      <div className={`font-black text-lg ${result.healthy ? 'text-green-400' : 'text-red-400'}`}>
+                        {result.healthy ? 'Crop Looks Healthy' : result.possible_pest || 'Disease Detected'}
+                      </div>
+                      <div className="text-sm mt-1" style={{color:'#d8f0db'}}>{result.crop} · {(result.confidence*100).toFixed(1)}% confidence · <span className="badge-online">{result.mode}</span></div>
+                      {!result.healthy && result.risk && (
+                        <div className={`mt-2 text-xs font-bold ${result.risk==='High'?'text-red-400':result.risk==='Medium'?'text-yellow-400':'text-green-400'}`}>
+                          Risk Level: {result.risk}
+                        </div>
+                      )}
+                      <button onClick={() => speakResult(result)} className="mt-3 px-4 py-1.5 rounded-full bg-green-500/20 text-green-300 text-xs font-semibold hover:bg-green-500/30 flex items-center gap-1 mx-auto pressable">
+                        {I.volume('w-3 h-3')} Speak diagnosis aloud
+                      </button>
+                    </div>
+
+                    {/* Top-3 */}
+                    {result.top3 && (
+                      <div>
+                        <div className="text-xs font-semibold text-green-300 mb-2 uppercase tracking-wide">Top-3 CNN Predictions</div>
+                        <ConfidenceBars top3={result.top3} animate />
+                      </div>
+                    )}
+
+                    {/* IPM Prescription */}
+                    {!result.healthy && selected && (
+                      <div className="rounded-xl p-4" style={{background:'rgba(239,68,68,0.06)', border:'1px solid rgba(239,68,68,0.2)'}}>
+                        <div className="text-xs font-semibold text-red-400 mb-2 uppercase tracking-wide">IPM Prescription</div>
+                        <div className="space-y-1.5 text-xs" style={{color:'#d1fae5'}}>
+                          <div><span style={{color:'#d8f0db'}}>IRAC Group:</span> <span className="font-semibold">{selected.irac_group || 'See chemical rotation advisor'}</span></div>
+                          <div><span style={{color:'#d8f0db'}}>Chemical:</span> <span className="font-semibold">{selected.treatment}</span></div>
+                          {selected.bio_alternative && (
+                            <div><span style={{color:'#d8f0db'}}>Bio-alternative:</span> <span className="font-semibold text-green-300">{selected.bio_alternative}</span></div>
+                          )}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Honest label */}
+                    <div className="text-xs text-center font-medium" style={{color:'#b8ddbf'}}>
+                      Analyzed by PlantVillage MobileNetV2 ONNX via OpenCV DNN · Mode: {result.mode}
+                    </div>
+                  </div>
+                )}
+
+                {/* How it works */}
+                <div className="agtech-card rounded-xl p-4">
+                  <div className="text-xs font-semibold text-green-300 mb-3 uppercase tracking-wide">How This Works (Technical Depth)</div>
+                  <div className="space-y-2 text-xs" style={{color:'#d8f0db'}}>
+                    {[
+                      ['Model', 'PlantVillage MobileNetV2 ONNX — 38 disease classes, 14 crops'],
+                      ['Runtime', 'OpenCV DNN (cv2.dnn.readNetFromONNX) — no cloud, no onnxruntime'],
+                      ['Input', '224×224 normalized RGB tile (1/127.5 scale, (1,1,1) mean)'],
+                      ['Confidence gate', 'Disease ≥55% reports | Healthy ≥85% | <threshold = VISUAL_CHECK'],
+                      ['Aerial scan', '6×6 grid tiles → per-tile CNN → BFS cluster detection'],
+                    ].map(([k,v]) => (
+                      <div key={k} className="flex gap-2"><span className="font-semibold text-green-400 w-28 shrink-0">{k}</span><span>{v}</span></div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+
+    /* ═══════════════════════════════════════════════════════════
+       INTERACTIVE MICROCLIMATE SANDBOX
+    ═══════════════════════════════════════════════════════════ */
+    function MicroClimateSandbox({ onBack }) {
+      const [params, setParams] = useState({ temperature:29, humidity:78, wind_speed:11, wind_direction_deg:225, base_acres:2.1, delay_hours:0, crop:'Cotton', pest:'Bollworm' });
+      const [result, setResult] = useState(null);
+      const [loading, setLoading] = useState(false);
+      const [autoRefresh, setAutoRefresh] = useState(true);
+      const timerRef = useRef(null);
+
+      const crops = ['Cotton','Rice','Wheat','Chilli','Tomato'];
+      const pests = ['Bollworm','Stem Borer','Aphid Cluster'];
+
+      const fetch_sandbox = async (p) => {
+        setLoading(true);
+        const qs = Object.entries(p).map(([k,v]) => `${k}=${encodeURIComponent(v)}`).join('&');
+        const data = await api('/api/spread/simulate-sandbox?' + qs);
+        if (data) setResult(data);
+        setLoading(false);
+      };
+
+      useEffect(() => { fetch_sandbox(params); }, []);
+
+      const onChange = (k, v) => {
+        const np = { ...params, [k]: v };
+        setParams(np);
+        if (autoRefresh) {
+          if (timerRef.current) clearTimeout(timerRef.current);
+          timerRef.current = setTimeout(() => fetch_sandbox(np), 400);
+        }
+      };
+
+      const riskColor = result ? (result.risk_level==='HIGH' ? '#ef4444' : result.risk_level==='MODERATE' ? '#f59e0b' : '#22c55e') : '#22c55e';
+
+      const Slider = ({label, k, min, max, step=1, unit=''}) => (
+        <div>
+          <div className="flex justify-between mb-1.5">
+            <span className="text-xs font-semibold text-green-300">{label}</span>
+            <span className="text-xs font-bold" style={{color: riskColor}}>{params[k]}{unit}</span>
+          </div>
+          <input type="range" min={min} max={max} step={step} value={params[k]}
+            onChange={e => onChange(k, parseFloat(e.target.value))}
+            className="agtech-slider" />
+        </div>
+      );
+
+      const preds = result?.predictions || [];
+      const maxArea = Math.max(...preds.map(p => p.range_max || p.area), 1);
+
+      return (
+        <div className="agtech-bg agtech-grid min-h-screen text-green-100" style={{backgroundColor:'#040d08',color:'#e2fce4'}}>
+          <AgTechHeader onBack={onBack} title="Interactive Microclimate Spread Sandbox" badge="LIVE SIMULATION" />
+
+          <div className="max-w-6xl mx-auto px-4 py-6 grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+            {/* Controls */}
+            <div className="lg:col-span-1 space-y-4">
+              <div className="agtech-card rounded-2xl p-5 space-y-5">
+                <div className="flex items-center justify-between">
+                  <h2 className="font-bold text-green-200 flex items-center gap-2">{I.wind('w-4 h-4 text-blue-400')} Microclimate Controls</h2>
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <span className="text-xs font-medium" style={{color:'#d8f0db'}}>Live</span>
+                    <div className={`w-8 h-4 rounded-full transition-colors ${autoRefresh ? 'bg-green-500' : 'bg-gray-700'} relative`} onClick={() => setAutoRefresh(!autoRefresh)}>
+                      <div className={`w-3 h-3 bg-white rounded-full absolute top-0.5 transition-all ${autoRefresh ? 'left-4.5' : 'left-0.5'}`} style={{left: autoRefresh ? '18px' : '2px'}} />
+                    </div>
+                  </label>
+                </div>
+
+                <Slider label="🌡️ Temperature" k="temperature" min={15} max={45} unit="°C" />
+                <Slider label="💧 Humidity" k="humidity" min={30} max={95} unit="%" />
+                <Slider label="🌬️ Wind Speed" k="wind_speed" min={0} max={40} unit=" km/h" />
+                <Slider label="🧭 Wind Direction" k="wind_direction_deg" min={0} max={360} unit="°" />
+                <Slider label="🌾 Base Outbreak Area" k="base_acres" min={0.5} max={10} step={0.5} unit=" acres" />
+                <Slider label="⏱️ Response Delay" k="delay_hours" min={0} max={24} unit="h" />
+
+                <div>
+                  <div className="text-xs font-semibold text-green-200 mb-2">Crop</div>
+                  <div className="flex gap-2 flex-wrap">
+                    {crops.map(c => <button key={c} onClick={() => onChange('crop', c)}
+                      className={`px-3 py-1 rounded-lg text-xs font-semibold pressable ${params.crop===c ? 'bg-green-500 text-white' : 'bg-white/10 text-white hover:bg-white/20'}`}>{c}</button>)}
+                  </div>
+                </div>
+                <div>
+                  <div className="text-xs font-semibold text-green-200 mb-2">Pest</div>
+                  <div className="flex gap-2 flex-wrap">
+                    {pests.map(p => <button key={p} onClick={() => onChange('pest', p)}
+                      className={`px-3 py-1 rounded-lg text-xs font-semibold pressable ${params.pest===p ? 'bg-red-500 text-white' : 'bg-white/10 text-white hover:bg-white/20'}`}>{p}</button>)}
+                  </div>
+                </div>
+              </div>
+
+              {/* Status quo comparison */}
+              <div className="agtech-card rounded-2xl p-4">
+                <div className="text-xs font-semibold text-green-300 mb-3 uppercase tracking-wide">📊 Status Quo vs FarmShield</div>
+                {result && (
+                  <div className="space-y-3">
+                    {[
+                      {label:'Without FarmShield', area: result.predictions?.at(-1)?.area?.toFixed(1) + ' acres', loss: '₹' + (result.economic_loss_inr||0).toLocaleString(), chemical: result.blanket_chemical_l + ' L', color:'#ef4444'},
+                      {label:'With FarmShield', area: result.effective_base_acres?.toFixed(1) + ' acres', loss: '₹' + (result.with_farmshield_loss_inr||0).toLocaleString(), chemical: result.precision_chemical_l + ' L', color:'#22c55e'},
+                    ].map(row => (
+                      <div key={row.label} className="rounded-lg p-3" style={{background:`${row.color}10`, border:`1px solid ${row.color}30`}}>
+                        <div className="text-xs font-bold mb-1.5" style={{color:row.color}}>{row.label}</div>
+                        <div className="grid grid-cols-3 gap-2 text-xs">
+                          <div><div style={{color:'#d8f0db'}}>Spread</div><div className="font-semibold" style={{color:row.color}}>{row.area}</div></div>
+                          <div><div style={{color:'#d8f0db'}}>Crop Loss</div><div className="font-semibold" style={{color:row.color}}>{row.loss}</div></div>
+                          <div><div style={{color:'#d8f0db'}}>Chemical</div><div className="font-semibold" style={{color:row.color}}>{row.chemical}</div></div>
+                        </div>
+                      </div>
+                    ))}
+                    <div className="rounded-lg p-3 bg-green-500/10 border border-green-500/30">
+                      <div className="text-xs font-bold text-green-400 mb-1">✅ FarmShield Saves</div>
+                      <div className="grid grid-cols-2 gap-2 text-xs">
+                        <div><div style={{color:'#d8f0db'}}>INR Saved</div><div className="font-black text-green-300">₹{(result.inr_saved||0).toLocaleString()}</div></div>
+                        <div><div style={{color:'#d8f0db'}}>Chemical Saved</div><div className="font-black text-green-300">{result.chemical_saved_pct}%</div></div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Spread chart + Wind ellipse */}
+            <div className="lg:col-span-2 space-y-5">
+
+              {/* Risk banner */}
+              {result && (
+                <div className="agtech-card rounded-2xl p-4 flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="w-3 h-3 rounded-full animate-pulse" style={{background: riskColor}} />
+                    <span className="font-black text-lg" style={{color: riskColor}}>Spread Risk: {result.risk_level}</span>
+                    <span className="text-xs font-medium" style={{color:'#d8f0db'}}>Growth rate: {result.growth_rate} /hr</span>
+                  </div>
+                  {loading && <div className="text-xs text-green-400 animate-pulse">Recalculating...</div>}
+                </div>
+              )}
+
+              {/* Spread timeline chart */}
+              <div className="agtech-card rounded-2xl p-5">
+                <h3 className="font-bold text-green-200 mb-4 flex items-center gap-2">{I.chart('w-4 h-4 text-blue-400')} Spread Forecast Timeline</h3>
+                <div className="space-y-3">
+                  {preds.map((p, i) => {
+                    const barPct = ((p.area / maxArea) * 100).toFixed(1);
+                    const errMin = ((p.range_min / maxArea) * 100).toFixed(1);
+                    const errMax = ((p.range_max / maxArea) * 100).toFixed(1);
+                    const hrs = p.hours;
+                    return (
+                      <div key={i} className="flex items-center gap-3">
+                        <div className="text-xs font-semibold w-8 text-right" style={{color:'#d8f0db'}}>{hrs}h</div>
+                        <div className="flex-1 relative h-6 rounded overflow-hidden" style={{background:'rgba(255,255,255,0.04)'}}>
+                          {/* Uncertainty band */}
+                          <div className="absolute top-0 bottom-0 rounded" style={{left:`${errMin}%`, width:`${errMax-errMin}%`, background: `${riskColor}18`}} />
+                          {/* Main bar */}
+                          <div className="absolute top-1 bottom-1 rounded conf-bar"
+                            style={{'--bar-w':`${barPct}%`, width:`${barPct}%`, background: i===0?'#22c55e': i<=2?riskColor:`${riskColor}cc`}} />
+                        </div>
+                        <div className="text-xs font-bold w-16 text-right" style={{color: i===0?'#22c55e':riskColor}}>{p.area} ac</div>
+                        <div className="text-[10px] w-20 text-right" style={{color:'#d8f0db'}}>[{p.range_min}–{p.range_max}]</div>
+                      </div>
+                    );
+                  })}
+                </div>
+                <div className="mt-2 text-xs" style={{color:'#b8ddbf'}}>Bars show projected spread · Shaded area = ±15% uncertainty band · Degree-day logistic growth model</div>
+              </div>
+
+              {/* Wind ellipse visualization */}
+              <div className="agtech-card rounded-2xl p-5">
+                <h3 className="font-bold text-green-200 mb-2 flex items-center gap-2">{I.wind('w-4 h-4 text-blue-400')} Wind Drift Ellipse (48h Spread Footprint)</h3>
+                <div className="text-xs mb-4" style={{color:'#d8f0db'}}>Wind direction: {params.wind_direction_deg}° · Speed: {params.wind_speed} km/h · Ellipse elongated along wind vector</div>
+                {result?.wind_drift_ellipse && (
+                  <svg viewBox="-1.5 -1.5 3 3" width="100%" style={{maxHeight:200, background:'rgba(0,0,0,0.2)'}} className="rounded-xl overflow-hidden">
+                    {/* Grid */}
+                    {[-1, -0.5, 0, 0.5, 1].map(v => (
+                      <g key={v}>
+                        <line x1={v} y1={-1.5} x2={v} y2={1.5} stroke="rgba(34,197,94,0.1)" strokeWidth="0.02"/>
+                        <line x1={-1.5} y1={v} x2={1.5} y2={v} stroke="rgba(34,197,94,0.1)" strokeWidth="0.02"/>
+                      </g>
+                    ))}
+                    {/* Center outbreak */}
+                    <circle cx={0} cy={0} r={0.05} fill="#ef4444" />
+                    <circle cx={0} cy={0} r={0.08} fill="rgba(239,68,68,0.2)" className="outbreak-pulse-anim" />
+                    {/* Ellipse */}
+                    {(() => {
+                      const pts = result.wind_drift_ellipse;
+                      const center_lat = 10.7905, center_lon = 78.7047;
+                      const svgPts = pts.map(p => {
+                        const x = (p.lon - center_lon) * 200;
+                        const y = -(p.lat - center_lat) * 200;
+                        return `${x},${y}`;
+                      }).join(' ');
+                      return <polygon points={svgPts} fill="rgba(239,68,68,0.12)" stroke="#ef4444" strokeWidth="0.03" strokeOpacity="0.6" />;
+                    })()}
+                    {/* Wind arrow */}
+                    {(() => {
+                      const rad = (params.wind_direction_deg - 90) * Math.PI / 180;
+                      const ex = Math.cos(rad) * 0.8, ey = Math.sin(rad) * 0.8;
+                      return <line x1={0} y1={0} x2={ex} y2={ey} stroke="#3b82f6" strokeWidth="0.05" markerEnd="url(#arr)" strokeOpacity="0.8" />;
+                    })()}
+                    <defs>
+                      <marker id="arr" markerWidth="4" markerHeight="4" refX="2" refY="2" orient="auto">
+                        <path d="M0,0 L4,2 L0,4 Z" fill="#3b82f6" />
+                      </marker>
+                    </defs>
+                  </svg>
+                )}
+                <div className="flex gap-4 mt-3 text-xs">
+                  <span className="flex items-center gap-1"><span className="w-3 h-1 rounded inline-block" style={{background:'#ef4444'}}></span>Spread zone</span>
+                  <span className="flex items-center gap-1"><span className="w-3 h-1 rounded inline-block" style={{background:'#3b82f6'}}></span>Wind direction</span>
+                  <span className="flex items-center gap-1"><span className="w-3 h-3 rounded-full inline-block" style={{background:'#ef4444'}}></span>Outbreak center</span>
+                </div>
+              </div>
+
+              {/* Economic summary */}
+              {result && (
+                <div className="agtech-card rounded-2xl p-5">
+                  <h3 className="font-bold text-green-200 mb-4 flex items-center gap-2">💰 Economic Impact Calculator</h3>
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                    {[
+                      {label:'Crop Loss Averted', val:`₹${(result.inr_saved||0).toLocaleString()}`, color:'#22c55e'},
+                      {label:'Chemical Saved', val:`${result.chemical_saved_l} L`, color:'#3b82f6'},
+                      {label:'Reduction %', val:`${result.chemical_saved_pct}%`, color:'#f59e0b'},
+                      {label:'48h Risk Spread', val:`${result.predictions?.at(-1)?.area||0} ac`, color: riskColor},
+                    ].map(({label,val,color}) => (
+                      <div key={label} className="agtech-card rounded-xl p-3 text-center">
+                        <div className="font-black text-xl" style={{color}}>{val}</div>
+                        <div className="text-xs mt-1" style={{color:'#d8f0db'}}>{label}</div>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="mt-2 text-xs" style={{color:'#b8ddbf'}}>Prototype Estimates — crop yield from published NFSM benchmarks · Chemical usage from ICAR precision spray studies</div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+
+    /* ═══════════════════════════════════════════════════════════
+       JUDGE PITCH TOUR MODAL
+    ═══════════════════════════════════════════════════════════ */
+    function JudgeTourModal({ onClose, onDemo, onSandbox, onLab }) {
+      const [step, setStep] = useState(0);
+      const steps = [
+        { icon: '🎯', title: 'The Problem', content: 'Indian smallholder farmers lose 15–35% of crop yield to pest damage annually. The blocker is not knowledge — it\'s that detection, decision, and action live in 3 different places with no coordination layer.', cta: null },
+        { icon: '🧠', title: 'Real AI: PlantVillage CNN', content: 'Every leaf photo runs the REAL PlantVillage MobileNetV2 ONNX model (38 classes, 14 crops) via OpenCV DNN. Zero simulation. Zero cloud. 100% on-device inference.', cta: { label: '→ Try AI Leaf Lab', fn: onLab } },
+        { icon: '📡', title: 'Microclimate Spread Model', content: 'A physics-based logistic growth model factoring temperature, humidity, wind velocity, and direction. Judges can drag sliders and watch spread curves + wind ellipses update in real time.', cta: { label: '→ Open Sandbox', fn: onSandbox } },
+        { icon: '🛩️', title: 'Lawnmower Spray Path', content: 'Our dispatch engine selects the optimal drone using a scoring formula: 1/(travel_time) × (battery%) × (payload_L). The selected drone flies a precise lawnmower pattern — saving 78.6% of chemical vs blanket spraying.', cta: { label: '→ See Live Demo', fn: onDemo } },
+        { icon: '🌾', title: 'Farmer-First Accessibility', content: 'FarmShield\'s protection does NOT live inside the farmer\'s phone. The phone is just one door. 7 Indian languages. Web Speech synthesis reads diagnoses aloud. SMS + IVR for feature phones. Works offline.', cta: null },
+        { icon: '✅', title: 'Honest Constraints', content: 'Numbers labeled "Prototype Estimate" are model-computed, not field-validated. Pesticide savings use published precision-vs-blanket benchmarks. RL dispatch is a weighted heuristic — clearly labeled. Every claim visible in working code.', cta: null },
+      ];
+      const s = steps[step];
+      return (
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4" style={{background:'rgba(0,0,0,0.85)'}}>
+          <div className="agtech-card rounded-3xl max-w-lg w-full p-6 relative" style={{border:'1px solid rgba(34,197,94,0.3)'}}>
+            <button onClick={onClose} className="absolute top-4 right-4 text-green-600 hover:text-green-300 text-xl">✕</button>
+            <div className="text-xs font-bold text-green-400 mb-2 uppercase tracking-widest">🏆 Judge Pitch Tour — Step {step+1}/{steps.length}</div>
+            <div className="text-5xl mb-4">{s.icon}</div>
+            <h2 className="text-xl font-black text-white mb-3">{s.title}</h2>
+            <p className="text-sm leading-relaxed" style={{color:'#c5e8c9'}}>{s.content}</p>
+            {s.cta && (
+              <button onClick={() => { s.cta.fn(); onClose(); }} className="mt-4 px-5 py-2 rounded-xl btn-glow text-sm font-bold pressable">
+                {s.cta.label}
+              </button>
+            )}
+            <div className="flex gap-2 mt-6 items-center justify-between">
+              <button onClick={() => setStep(Math.max(0, step-1))} disabled={step===0}
+                className="px-4 py-2 rounded-xl text-sm font-semibold bg-white/5 text-green-300 disabled:opacity-30 pressable">← Prev</button>
+              <div className="flex gap-1.5">
+                {steps.map((_,i) => <div key={i} className="w-2 h-2 rounded-full" style={{background: i===step ? '#22c55e' : 'rgba(34,197,94,0.2)'}} />)}
+              </div>
+              {step < steps.length-1
+                ? <button onClick={() => setStep(step+1)} className="px-4 py-2 rounded-xl text-sm font-bold btn-glow pressable">Next →</button>
+                : <button onClick={onClose} className="px-4 py-2 rounded-xl text-sm font-bold btn-glow pressable">Finish ✓</button>
+              }
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    /* END OF NEW COMPONENTS */
     function App() {
       const [mode, setMode] = useState(() => {
         const m = new URLSearchParams(window.location.search).get('mode');
         return ['demo', 'farmer', 'expert'].includes(m) ? m : 'landing';
       });
       const [lang, setLang] = useState(() => new URLSearchParams(window.location.search).get('lang') || 'en');
+      const [showTour, setShowTour] = useState(false);
 
       // Wrap farmer app in phone frame on desktop
       const isMobile = window.innerWidth < 640;
 
       return (
         <div className="h-full">
+          {showTour && <JudgeTourModal onClose={() => setShowTour(false)} onDemo={() => { setShowTour(false); setMode('demo'); }} onSandbox={() => { setShowTour(false); setMode('sandbox'); }} onLab={() => { setShowTour(false); setMode('labscan'); }} />}
           {mode === 'landing' && (
-            <Landing onDemo={() => setMode('demo')} onFarmer={() => setMode('farmer')} onExpert={() => setMode('expert')} />
+            <Landing onDemo={() => setMode('demo')} onFarmer={() => setMode('farmer')} onExpert={() => setMode('expert')} onSandbox={() => setMode('sandbox')} onLab={() => setMode('labscan')} onTour={() => setShowTour(true)} />
           )}
           {mode === 'demo' && <LiveDemo onExit={() => setMode('landing')} onExpert={() => setMode('expert')} lang={lang} />}
+          {mode === 'sandbox' && <MicroClimateSandbox onBack={() => setMode('landing')} />}
+          {mode === 'labscan' && <AILeafLab onBack={() => setMode('landing')} />}
           {mode === 'farmer' && !isMobile && (
             <div className="h-full bg-paper-100 flex items-center justify-center">
               <div className="phone-frame" style={{width:390, height:720}}>
@@ -2209,10 +3113,10 @@
                 </div>
               </div>
               <div className="ml-8 max-w-xs hidden lg:block">
-                <h2 className="text-xl font-bold text-ink-800 mb-2">Farmer App</h2>
+                <h2 className="text-xl font-bold text-ink-800 mb-2">Farmer Mobile App</h2>
                 <p className="text-sm text-ink-500 mb-4">Designed for smallholder farmers. No technical knowledge needed.</p>
                 <div className="space-y-2">
-                  {['7 Indian languages + voice guide', 'Works offline — syncs when signal returns', 'SMS + IVR for feature phones', 'Real CNN leaf photo analysis'].map(f => (
+                  {['7 Indian languages + voice guide', 'Works offline — syncs when signal returns', 'SMS + IVR for feature phones', 'Real CNN leaf photo analysis', 'Web Speech reads diagnosis aloud'].map(f => (
                     <div key={f} className="flex items-center gap-2 text-sm text-ink-600">
                       <span className="text-brand-600 w-4">{I.check('w-4 h-4')}</span>{f}
                     </div>

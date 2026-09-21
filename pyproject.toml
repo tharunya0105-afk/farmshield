@@ -1,0 +1,18 @@
+[project]
+name = "farmshield"
+version = "1.0.0"
+description = "FarmShield FastAPI Backend"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "fastapi>=0.115.0",
+    "uvicorn>=0.30.0",
+    "sqlalchemy>=2.0.0",
+    "pydantic>=2.0.0",
+    "python-multipart>=0.0.18",
+    "aiofiles>=24.1.0",
+    "numpy>=1.24.0"
+]
+
+[tool.vercel]
+entrypoint = "backend.main:app"

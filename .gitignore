@@ -50,3 +50,5 @@ npm-debug.log*
 
 # Model store is checked in (large but required)
 # backend/model_store/*.onnx  # do NOT gitignore these
+
+.vercel
