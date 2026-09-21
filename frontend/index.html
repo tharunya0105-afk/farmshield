@@ -913,10 +913,22 @@
       const showToast = (msg) => { setToast(msg); setTimeout(() => setToast(null), 2600); };
 
       const startVoice = () => {
-        const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-        if (!SR) { showToast(t('voiceUnavailable')); return; }
+        // Text-to-speech: read the current alert aloud in the farmer's language
+        if (!window.speechSynthesis) { showToast(t('voiceUnavailable')); return; }
+        window.speechSynthesis.cancel();
+        const langCode = lang === 'ta' ? 'ta-IN' : lang === 'hi' ? 'hi-IN' : lang === 'te' ? 'te-IN' : lang === 'kn' ? 'kn-IN' : lang === 'ml' ? 'ml-IN' : lang === 'mr' ? 'mr-IN' : 'en-IN';
+        let msg;
+        if (hasAlert && demoOutbreak) {
+          msg = `${t('possiblePest')}. ${t('possibleIssue')} ${demoOutbreak.affected_area_acres} ${t('acres')}. ${t('risk')}: ${t('riskHigh')}. ${t('recommend')}`;
+        } else {
+          msg = `${t('healthy')}. ${t('cropCotton')} ${t('cropStatus')}.`;
+        }
+        const u = new SpeechSynthesisUtterance(msg);
+        u.lang = langCode; u.rate = 0.9; u.pitch = 1.0;
         setVoiceState('listening');
-        setTimeout(() => { setVoiceState('idle'); setScreen('result'); }, 2500);
+        u.onend = () => setVoiceState('idle');
+        u.onerror = () => setVoiceState('idle');
+        window.speechSynthesis.speak(u);
       };
 
       const onPhotoPicked = (e) => {
@@ -1795,20 +1807,22 @@
         layersRef.current.forEach(l => map.removeLayer(l));
         layersRef.current = [];
         fields.forEach(f => {
-          if (!f.polygon) return;
+          if (!f.polygon || !Array.isArray(f.polygon) || f.polygon.length < 3) return;
+          const valid = f.polygon.every(p => Array.isArray(p) && p.length === 2 && !isNaN(p[0]) && !isNaN(p[1]));
+          if (!valid) return;
           const color = f.health_status === 'healthy' ? '#2d8230' : '#d97706';
           const poly = L.polygon(f.polygon, { color, weight: 2, fillOpacity: 0.12 }).addTo(map)
             .bindPopup(`<b>${f.name}</b><br>${f.crop} · ${f.area_acres} acres<br>${f.health_status === 'healthy' ? '🟢 Healthy' : '🟡 Stressed'}`);
           layersRef.current.push(poly);
         });
-        outbreaks.filter(o => o.status === 'active').forEach(o => {
+        outbreaks.filter(o => o.status === 'active' && o.latitude != null && o.longitude != null && !isNaN(o.latitude) && !isNaN(o.longitude)).forEach(o => {
           const icon = L.divIcon({ html: `<div class="marker-pin pin-red"></div>`, iconSize:[18,18], iconAnchor:[9,9], className:'' });
           const mk = L.marker([o.latitude, o.longitude], { icon }).addTo(map)
             .bindPopup(`<b>OUT-${String(o.id).padStart(4,'0')}</b><br>${o.pest} · ${o.affected_area_acres} acres<br>Risk: ${o.risk_level}`);
           layersRef.current.push(mk);
           layersRef.current.push(L.circle([o.latitude, o.longitude], { radius: o.affected_area_acres*120, color:'#dc2626', weight:1, fillOpacity:0.07 }).addTo(map));
         });
-        agents.filter(a => a.status === 'AVAILABLE').forEach(a => {
+        agents.filter(a => a.status === 'AVAILABLE' && a.latitude != null && a.longitude != null && !isNaN(a.latitude) && !isNaN(a.longitude)).forEach(a => {
           const icon = L.divIcon({ html: `<div class="marker-pin pin-green"></div>`, iconSize:[14,14], iconAnchor:[7,7], className:'' });
           const mk = L.marker([a.latitude, a.longitude], { icon }).addTo(map).bindTooltip(`${a.name} · available`);
           layersRef.current.push(mk);
