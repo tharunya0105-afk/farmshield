@@ -331,7 +331,7 @@
 
   <script type="text/babel">
     const { useState, useEffect, useRef, useCallback, useMemo } = React;
-    const API = '';
+    const API = window.FARMSHIELD_API || '';
 
     /* ─────────────────── SVG ICONS ─────────────────── */
     const I = {
@@ -594,10 +594,14 @@
     /* ─── shared API ─── */
     async function api(path, opts = {}) {
       try {
-        const res = await fetch(API + path, { headers: { 'Content-Type': 'application/json' }, ...opts });
-        if (!res.ok) return null;
+        const headers = opts.body ? { 'Content-Type': 'application/json' } : {};
+        const res = await fetch(API + path, { headers, ...opts });
+        if (!res.ok) {
+          console.warn('API', opts.method || 'GET', path, res.status, res.statusText);
+          return null;
+        }
         return await res.json();
-      } catch (e) { return null; }
+      } catch (e) { console.error('API error', path, e); return null; }
     }
     const sleep = ms => new Promise(r => setTimeout(r, ms));
 
@@ -1491,7 +1495,21 @@
 
     /* ─────────────────── LIVE DEMO (upgraded split-screen) ─────────────────── */
     function LiveDemo({ onExit, onExpert, lang }) {
-      const t = k => tr(lang || 'en', k);
+      const defaultScenarios = [
+        { id: 'cotton_bollworm', name: 'Cotton Bollworm (Baseline)', icon: '🌿', crop: 'Cotton', pest: 'Bollworm', confidence: 0.94, severity: 'HIGH', affected_area_acres: 2.1, temperature: 29.0, humidity: 78.0, wind_speed: 11.0, field_id: 1, field_name: 'North Cotton Block' },
+        { id: 'maize_fall_armyworm', name: 'Maize Fall Armyworm (High Wind)', icon: '🌽', crop: 'Maize', pest: 'Fall Armyworm', confidence: 0.96, severity: 'CRITICAL', affected_area_acres: 4.5, temperature: 33.0, humidity: 65.0, wind_speed: 38.0, field_id: 2, field_name: 'South Maize Field' },
+        { id: 'tomato_late_blight', name: 'Tomato Late Blight (Bio-IPM)', icon: '🍅', crop: 'Tomato', pest: 'Late Blight', confidence: 0.98, severity: 'HIGH', affected_area_acres: 1.4, temperature: 23.0, humidity: 94.0, wind_speed: 8.0, field_id: 3, field_name: 'Greenhouse Plot #2' },
+        { id: 'rice_stem_borer', name: 'Rice Stem Borer (Fleet Failover)', icon: '🌾', crop: 'Rice', pest: 'Stem Borer', confidence: 0.91, severity: 'MODERATE', affected_area_acres: 3.2, temperature: 30.0, humidity: 82.0, wind_speed: 14.0, field_id: 4, field_name: 'Cauvery Delta Paddy' }
+      ];
+      const [selectedScenario, setSelectedScenario] = useState('cotton_bollworm');
+      const [scenariosList, setScenariosList] = useState(defaultScenarios);
+      useEffect(() => {
+        api('/api/scenarios').then(data => {
+          if (data && Array.isArray(data) && data.length > 0) setScenariosList(data);
+        });
+      }, []);
+      const activeScenario = scenariosList.find(s => s.id === selectedScenario) || defaultScenarios[0];
+
       const [stage, setStage] = useState(-1);
       const [elapsed, setElapsed] = useState(0);
       const [running, setRunning] = useState(false);
@@ -1587,24 +1605,24 @@
           await sleep(800);
 
           // Stage 1: Detect
-          ev('Detection Agent', 'Scanning East Mixed Plot — multispectral anomaly at coords 10.790°N 78.710°E', '🔍');
-          const det = await api('/api/detection/analyze', { method:'POST', body: JSON.stringify({ crop:'Cotton', field_id:3 }) });
+          ev('Detection Agent', `Scanning ${activeScenario.field_name || 'plot'} — multispectral anomaly triggered [${activeScenario.name}]`, '🔍');
+          const det = await api('/api/detection/analyze', { method:'POST', body: JSON.stringify({ scenario_id: activeScenario.id, crop: activeScenario.crop, field_id: activeScenario.field_id || 1 }) });
           if (!det) throw new Error('detect');
           const conf = await api(`/api/detections/${det.detection_id}/confirm`, { method:'POST' });
           if (!conf) throw new Error('confirm');
           markOutbreak(det.latitude, det.longitude, det.affected_area_acres);
-          ev('Detection Agent', `⚠ OUTBREAK FLAGGED — Bollworm, ${(det.confidence*100).toFixed(0)}% confidence, ${det.affected_area_acres} acres`, '🔴');
+          ev('Detection Agent', `⚠ OUTBREAK FLAGGED — ${det.possible_pest} in ${det.crop}, ${(det.confidence*100).toFixed(0)}% confidence, ${det.affected_area_acres} acres`, '🔴');
           await sleep(2500);
 
           // Stage 2: Predict
           setStage(1);
           const obs = await api('/api/outbreaks?status=active');
           const ob = (obs||[]).find(o => o.id === conf.outbreak_id) || (obs||[])[0];
-          // spread/calculate is non-fatal — demo continues even if unavailable
-          const spread = await api('/api/spread/calculate', { method:'POST', body: JSON.stringify({ temperature:29, humidity:78, wind_speed:11, base_acres:2.1 }) }).catch(() => null);
+          const spread = await api('/api/spread/calculate', { method:'POST', body: JSON.stringify({ temperature: activeScenario.temperature, humidity: activeScenario.humidity, wind_speed: activeScenario.wind_speed, base_acres: activeScenario.affected_area_acres }) }).catch(() => null);
           setData(d => ({ ...d, ob, spread }));
-          ev('Prediction Agent', 'Degree-day logistic growth model: 29°C · 78% RH · 11 kph wind', '🌡️');
-          ev('Prediction Agent', `Spread curve: 2.1 → 3.2 → 5.5 → 8.7 → 14.2 acres in 24h  [±15% band]`, '📈');
+          ev('Prediction Agent', `Degree-day growth model: ${activeScenario.temperature}°C · ${activeScenario.humidity}% RH · ${activeScenario.wind_speed} kph wind`, '🌡️');
+          const finalArea = spread?.predictions?.at(-1)?.area || (activeScenario.affected_area_acres * 5.5).toFixed(1);
+          ev('Prediction Agent', `Spread curve: ${activeScenario.affected_area_acres} → ${finalArea} acres in 24h  [±15% band]`, '📈');
           await sleep(2500);
 
           // Stage 3: Select
@@ -1616,39 +1634,42 @@
           if (!mission) throw new Error('Mission creation failed. Check /api/missions POST.');
           setData(d => ({ ...d, sel, cand, mission }));
           ev('Dispatch Engine', `Evaluating ${(sel.candidates||[]).length} agents — scoring by travel time × battery × payload`, '⚙️');
-          ev('Dispatch Engine', `DRONE-03 selected: ${cand ? cand.distance_km : '2.3'} km · ~3 min · ${cand ? cand.battery : '100'}% battery · 6.0L payload`, '✅');
-          if ((sel.candidates||[]).find(c => c.battery < 50)) ev('Dispatch Engine', `DRONE-04 skipped — battery 35% (charging). System gated correctly.`, '⚡');
+          ev('Dispatch Engine', `${cand ? cand.name : 'Selected agent'} optimal: ${cand ? cand.distance_km : '1.8'} km · ${cand ? cand.battery : '95'}% battery`, '✅');
+          if ((sel.candidates||[]).find(c => c.battery < 50)) ev('Dispatch Engine', `DRONE-04 skipped — battery 35% (charging). Fleet failover rule enforced.`, '⚡');
           await sleep(1500);
 
           // Stage 4: En route
           setStage(3);
-          ev('Mission Controller', `Mission ${mission.mission_code} created — target: 2.1 acres precision zone`, '📋');
+          ev('Mission Controller', `Mission ${mission.mission_code} created — target: ${activeScenario.affected_area_acres} acres precision zone`, '📋');
           await api(`/api/missions/${mission.mission_id}/status?action=dispatch`, { method:'POST' });
           const agents = (await api('/api/agents')||[]);
           const agent = agents.find(a => a.id === sel.selected);
           const from = agent ? [agent.latitude, agent.longitude] : [10.785, 78.690];
           moveAgent(from, [det.latitude, det.longitude], cand ? cand.name : 'DRONE-03');
-          ev('Drone Agent', `${cand ? cand.name : 'DRONE-03'} airborne → target coordinates`, '🛩️');
+          ev('Fleet Controller', `${cand ? cand.name : 'Agent'} airborne → target coordinates`, '🛩️');
           await sleep(1000);
           await api(`/api/missions/${mission.mission_id}/status?action=arrive`, { method:'POST' });
-          ev('Drone Agent', 'Arrived at treatment zone — hovering at 15m, confirming coordinates', '📍');
+          ev('Fleet Controller', 'Arrived at treatment zone — hovering at 15m, initiating spray matrix', '📍');
           await sleep(1500);
 
           // Stage 5: Treat
           setStage(4);
           await api(`/api/missions/${mission.mission_id}/status?action=treat`, { method:'POST' });
-          ev('Treatment Agent', 'Precision spray started — Chlorantraniliprole (IRAC Group 28) · 1.8L target', '💧');
+          const blanketL = Math.round(activeScenario.affected_area_acres * 4.0 * 10) / 10;
+          const precisionL = Math.round(activeScenario.affected_area_acres * 4.0 * 0.214 * 10) / 10;
+          const totalSaved = Math.round((blanketL - precisionL) * 10) / 10;
+          const pctSaved = ((totalSaved / blanketL) * 100).toFixed(1);
+          ev('Treatment Agent', `Precision spray started — ${precisionL}L target vs ${blanketL}L conventional`, '💧');
           // Animate litre counter
-          const totalSaved = 8.4 - 1.8;
           const savedTimer = setInterval(() => {
-            setLitresSaved(v => { const next = Math.min(v + 0.15, totalSaved); return Math.round(next * 10) / 10; });
-          }, 200);
+            setLitresSaved(v => { const next = Math.min(v + 0.25, totalSaved); return Math.round(next * 10) / 10; });
+          }, 150);
           setLitresTimer(savedTimer);
           await sleep(2800);
           clearInterval(savedTimer);
           setLitresSaved(totalSaved);
           await api(`/api/missions/${mission.mission_id}/status?action=complete`, { method:'POST' });
-          ev('Treatment Agent', '✓ Treatment complete — 2.1 acres, 1.8L precision vs 8.4L conventional (−78.6%)', '✅');
+          ev('Treatment Agent', `✓ Treatment complete — ${activeScenario.affected_area_acres} acres, ${precisionL}L precision vs ${blanketL}L blanket (−${pctSaved}%)`, '✅');
           await sleep(1000);
 
           // Stage 6: Contain
@@ -1656,7 +1677,7 @@
           setContainment(true);
           addContainmentRing(det.latitude, det.longitude);
           ev('Mission Controller', '🟢 OUTBREAK CONTAINED — OUT-' + String(conf.outbreak_id).padStart(4,'0'), '🟢');
-          ev('Notification Agent', 'Farmer SMS sent in Tamil language', '📱');
+          ev('Notification Agent', `Farmer notification dispatched in local language`, '📱');
           setDone(true);
           await sleep(1200);
         } catch (e) {
@@ -1693,6 +1714,22 @@
             <button onClick={onExpert} className="hidden md:block text-xs font-semibold text-ink-500 border border-paper-200 rounded-lg px-2 py-1.5 hover:bg-paper-50">{I.wrench('w-4 h-4 inline mr-1')}Expert Console</button>
           </div>
 
+          {/* Scenario Selector Strip */}
+          <div className="bg-paper-50 border-b border-paper-200 px-4 py-2 flex items-center gap-2 overflow-x-auto shrink-0">
+            <span className="text-[11px] font-bold text-ink-500 uppercase tracking-wider shrink-0 flex items-center gap-1">
+              ⚡ Simulation Scenario:
+            </span>
+            <div className="flex items-center gap-1.5 flex-nowrap">
+              {scenariosList.map(sc => (
+                <button key={sc.id} disabled={running} onClick={() => { setSelectedScenario(sc.id); resetAll(); }}
+                  className={`px-3 py-1 rounded-full text-xs font-semibold whitespace-nowrap transition-all flex items-center gap-1.5 pressable ${selectedScenario===sc.id ? 'bg-brand-600 text-white shadow-sm ring-2 ring-brand-300' : 'bg-white text-ink-700 hover:bg-paper-200 border border-paper-200 disabled:opacity-50'}`}>
+                  <span>{sc.icon || '🌾'}</span>
+                  <span>{sc.name}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+
           {/* Split layout: map + panel */}
           <div className="flex-1 flex overflow-hidden">
             {/* Map */}
@@ -1719,13 +1756,16 @@
               <div className="bg-white border-b border-paper-200 p-4">
                 <div className="flex items-start justify-between gap-2">
                   <div>
-                    <h2 className="font-bold text-ink-800 text-sm">{t('outbreakTitle')}</h2>
-                    <p className="text-xs text-ink-500 mt-0.5">2.1 acres · High risk · 29°C · 78% RH</p>
+                    <h2 className="font-bold text-ink-800 text-sm flex items-center gap-1.5">
+                      <span>{activeScenario.icon || '🌾'}</span>
+                      <span>{activeScenario.crop} · {activeScenario.pest}</span>
+                    </h2>
+                    <p className="text-xs text-ink-500 mt-0.5">{activeScenario.affected_area_acres} acres · {activeScenario.severity} Risk · {activeScenario.temperature}°C · {activeScenario.humidity}% RH · {activeScenario.wind_speed} km/h</p>
                   </div>
-                  <span className="text-xs font-semibold bg-amber2-100 text-amber2-500 px-2 py-0.5 rounded-full flex-shrink-0">Demo</span>
+                  <span className="text-[10px] font-bold bg-brand-100 text-brand-700 px-2 py-0.5 rounded-full flex-shrink-0 uppercase">{activeScenario.id.split('_')[0]}</span>
                 </div>
                 {/* Spread prediction mini chart */}
-                {spread.predictions && (
+                {spread && spread.predictions && spread.predictions.length > 0 && (
                   <div className="mt-3 pt-3 border-t border-paper-100">
                     <p className="text-[10px] text-ink-400 font-semibold uppercase tracking-wide mb-2">Predicted Spread (acres)</p>
                     <div className="flex items-end gap-1 h-10">
@@ -1766,7 +1806,7 @@
                             {s.label}
                             {isNow && s.busy && <span className="ml-1 text-xs font-normal text-ink-400 animate-pulse">{s.busy}</span>}
                           </p>
-                          {s.key === 'predict' && isDone && spread.predictions && (
+                          {s.key === 'predict' && isDone && spread && spread.predictions && (
                             <p className="text-xs text-ink-400 mt-0.5">2.1 → 14.2 acres in 24h · growth rate {spread.growth_rate}</p>
                           )}
                           {s.key === 'select' && isDone && cand && cand.name && (
@@ -1809,9 +1849,10 @@
               {/* Controls */}
               <div className="p-3 border-t border-paper-200 bg-white space-y-2">
                 {error && (
-                  <div className="bg-red-50 border border-red-200 rounded-app p-3 text-center">
-                    <p className="text-sm text-red-700">Demo service unavailable</p>
-                    <button onClick={run} className="mt-2 px-4 py-1.5 bg-red-600 text-white rounded-app text-xs font-semibold">Retry</button>
+                  <div className="bg-red-50 border border-red-200 rounded-app p-3">
+                    <p className="text-sm font-semibold text-red-700 mb-1">⚠ Demo Error</p>
+                    <p className="text-xs text-red-600 mb-2">{error === 'demo' ? 'A backend API call failed. Please retry.' : error}</p>
+                    <button onClick={run} className="w-full py-2 bg-red-600 text-white rounded-app text-xs font-bold">↺ Retry Demo</button>
                   </div>
                 )}
                 <div className="flex gap-2">
@@ -2988,6 +3029,34 @@
                       <div className={`w-3 h-3 bg-white rounded-full absolute top-0.5 transition-all ${autoRefresh ? 'left-4.5' : 'left-0.5'}`} style={{left: autoRefresh ? '18px' : '2px'}} />
                     </div>
                   </label>
+                </div>
+
+                {/* 1-Click Simulation Presets */}
+                <div>
+                  <div className="text-[11px] font-bold text-green-300 mb-2 uppercase tracking-wider flex items-center justify-between">
+                    <span>⚡ Quick Simulation Presets</span>
+                    <span className="text-[10px] text-green-400 font-normal">1-Click Test</span>
+                  </div>
+                  <div className="grid grid-cols-3 gap-1.5">
+                    <button onClick={() => {
+                      const p = { ...params, temperature:35, humidity:55, wind_speed:38, wind_direction_deg:225, base_acres:4.5, crop:'Maize', pest:'Fall Armyworm' };
+                      setParams(p); fetch_sandbox(p);
+                    }} className="p-2 rounded-xl bg-red-950/60 border border-red-500/50 hover:bg-red-900/60 text-[11px] font-bold text-red-200 text-center pressable transition-all">
+                      🌪️ Storm Drift
+                    </button>
+                    <button onClick={() => {
+                      const p = { ...params, temperature:23, humidity:94, wind_speed:8, wind_direction_deg:90, base_acres:1.5, crop:'Tomato', pest:'Late Blight' };
+                      setParams(p); fetch_sandbox(p);
+                    }} className="p-2 rounded-xl bg-blue-950/60 border border-blue-500/50 hover:bg-blue-900/60 text-[11px] font-bold text-blue-200 text-center pressable transition-all">
+                      🌧️ Fungal Bloom
+                    </button>
+                    <button onClick={() => {
+                      const p = { ...params, temperature:29, humidity:78, wind_speed:11, wind_direction_deg:180, base_acres:2.1, crop:'Cotton', pest:'Bollworm' };
+                      setParams(p); fetch_sandbox(p);
+                    }} className="p-2 rounded-xl bg-emerald-950/60 border border-emerald-500/50 hover:bg-emerald-900/60 text-[11px] font-bold text-emerald-200 text-center pressable transition-all">
+                      🌿 Baseline Delta
+                    </button>
+                  </div>
                 </div>
 
                 <Slider label="🌡️ Temperature" k="temperature" min={15} max={45} unit="°C" />

@@ -52,6 +52,32 @@ FarmShield DB initialized.
 
 ---
 
+## Cloud Deployment Options
+
+### Option A — Docker / Docker Compose (Universal)
+```bash
+# Build and run container locally or on any cloud VPS (AWS, GCP, DigitalOcean, Hetzner)
+docker compose up --build
+```
+The app will be available at `http://localhost:8000`.
+
+### Option B — Render.com (Automatic Blueprint)
+1. Fork or push this repository to your GitHub account.
+2. In [Render Dashboard](https://dashboard.render.com), click **New +** $\to$ **Blueprint**.
+3. Connect your repository. Render automatically reads `render.yaml` and deploys the web service with:
+   - Build command: `pip install -r requirements.txt`
+   - Start command: `cd backend && uvicorn main:app --host 0.0.0.0 --port $PORT`
+
+### Option C — Vercel (Frontend) + Hosted Backend
+1. Deploy the backend to Render, Railway, or Fly.io.
+2. Deploy the frontend repository to Vercel (it reads `vercel.json` automatically).
+3. If the backend is on a separate domain, set the environment variable or script tag in `frontend/index.html`:
+   ```html
+   <script>window.FARMSHIELD_API = 'https://your-backend.onrender.com';</script>
+   ```
+
+---
+
 ## Step 4 — Open the App
 
 Navigate to: **http://localhost:8000**

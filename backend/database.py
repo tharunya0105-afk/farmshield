@@ -3,6 +3,7 @@ FarmShield - Database Models & Setup
 Detect Early. Predict Spread. Protect Precisely.
 """
 import os, json, random, string, datetime
+from datetime import timezone
 from sqlalchemy import (
     create_engine, Column, Integer, String, Float, Boolean, Text,
     DateTime, ForeignKey, JSON
@@ -319,13 +320,13 @@ def seed_data(db):
     old_detection = Detection(crop="Rice", possible_pest="Stem Borer", confidence=0.87, severity="MEDIUM", affected_area_acres=1.5, latitude=10.850, longitude=78.620, mode="DEMO_SIMULATION", status="resolved")
     db.add(old_detection)
     db.flush()
-    old_outbreak = Outbreak(detection_id=old_detection.id, crop="Rice", pest="Stem Borer", severity="MEDIUM", affected_area_acres=1.5, latitude=10.850, longitude=78.620, risk_level="MEDIUM", status="contained", resolved_at=datetime.datetime.utcnow() - datetime.timedelta(days=3))
+    old_outbreak = Outbreak(detection_id=old_detection.id, crop="Rice", pest="Stem Borer", severity="MEDIUM", affected_area_acres=1.5, latitude=10.850, longitude=78.620, risk_level="MEDIUM", status="contained", resolved_at=datetime.datetime.now(timezone.utc).replace(tzinfo=None) - datetime.timedelta(days=3))
     db.add(old_outbreak)
     db.flush()
-    mission = Mission(mission_code="MSN-2047", outbreak_id=old_outbreak.id, agent_id=agents[0].id, target_area_acres=1.5, estimated_chemical_l=6.0, precision_chemical_l=1.2, status="completed", eta_minutes=18, completed_at=datetime.datetime.utcnow() - datetime.timedelta(days=3))
+    mission = Mission(mission_code="MSN-2047", outbreak_id=old_outbreak.id, agent_id=agents[0].id, target_area_acres=1.5, estimated_chemical_l=6.0, precision_chemical_l=1.2, status="completed", eta_minutes=18, completed_at=datetime.datetime.now(timezone.utc).replace(tzinfo=None) - datetime.timedelta(days=3))
     db.add(mission)
     db.flush()
-    db.add(Treatment(mission_id=mission.id, target_area_acres=1.5, chemical_volume_l=1.2, estimated_conventional_l=6.0, savings_percent=80.0, status="completed", completed_at=datetime.datetime.utcnow() - datetime.timedelta(days=3)))
+    db.add(Treatment(mission_id=mission.id, target_area_acres=1.5, chemical_volume_l=1.2, estimated_conventional_l=6.0, savings_percent=80.0, status="completed", completed_at=datetime.datetime.now(timezone.utc).replace(tzinfo=None) - datetime.timedelta(days=3)))
 
     # Notifications
     db.add(Notification(farmer_id=farmers[0].id, title="Pest Detected", message="Bollworm detected in your cotton field. Precision treatment recommended.", notification_type="warning"))

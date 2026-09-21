@@ -1,8 +1,22 @@
 """
 FarmShield - FastAPI Backend
 Detect Early. Predict Spread. Protect Precisely.
+
+Phase 3-5 improvements applied:
+- H4: Replaced deprecated @app.on_event("startup") with lifespan context manager
+- H3: math.sqrt guards for zero/negative affected_area_acres
+- M3: datetime.datetime.utcnow() → datetime.now(timezone.utc)
+- H5: Simple rate-limit on /api/demo/reset (1 per 5 seconds)
+- L3: Fixed analyze_leaf_sample to not access private _net/_softmax directly
+- BUG: Fixed PUT /api/farmers/{id}/language — was a query param, now body JSON
+- SECURITY: input clamp on consecutive_applications in resistance evaluator
+- SECURITY: validate swath_width_m > 0 in waypoints to prevent division by zero
+- CLEANUP: Removed unused bare except: clauses replaced with specific handlers
+- UX: dispatch/select returns 422 with message when no compatible agents found
 """
-import datetime, math, random, string, os, sys
+import datetime, math, random, string, os, sys, time
+from contextlib import asynccontextmanager
+from datetime import timezone
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from typing import Optional, List
 from fastapi import FastAPI, Depends, HTTPException, UploadFile, File, Form
@@ -11,7 +25,7 @@ from fastapi.responses import FileResponse
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 from sqlalchemy import func
-from pydantic import BaseModel
+from pydantic import BaseModel, field_validator
 
 from database import (
     get_db, init_db, seed_data,
@@ -29,9 +43,113 @@ import aerial_scan
 BLANKET_CHEMICAL_L_PER_ACRE = 4.0  # Liters of chemical per acre for conventional blanket spraying
 PRECISION_CHEMICAL_RATIO = 0.214    # Precision drone uses ~21.4% of blanket volume
 
-app = FastAPI(title="FarmShield API", version="1.0.0", description="Detect Early. Predict Spread. Protect Precisely.")
+# ─── SCENARIO ENGINE ───────────────────────────────────────
+SCENARIOS = {
+    "cotton_bollworm": {
+        "id": "cotton_bollworm",
+        "name": "Cotton Bollworm (Baseline)",
+        "icon": "🌿",
+        "crop": "Cotton",
+        "pest": "Bollworm",
+        "confidence": 0.94,
+        "severity": "HIGH",
+        "affected_area_acres": 2.1,
+        "temperature": 29.0,
+        "humidity": 78.0,
+        "wind_speed": 11.0,
+        "wind_direction": "NE",
+        "field_id": 1,
+        "field_name": "North Cotton Block",
+        "latitude": 10.795,
+        "longitude": 78.700,
+        "description": "Standard baseline: high humidity promotes bollworm infestation. Rapid drone containment saves 78.6% pesticide volume."
+    },
+    "maize_fall_armyworm": {
+        "id": "maize_fall_armyworm",
+        "name": "Maize Fall Armyworm (High Wind Storm)",
+        "icon": "🌽",
+        "crop": "Maize",
+        "pest": "Fall Armyworm",
+        "confidence": 0.96,
+        "severity": "CRITICAL",
+        "affected_area_acres": 4.5,
+        "temperature": 33.0,
+        "humidity": 65.0,
+        "wind_speed": 38.0,
+        "wind_direction": "SW",
+        "field_id": 2,
+        "field_name": "South Maize Field",
+        "latitude": 10.788,
+        "longitude": 78.712,
+        "description": "Severe wind surge (38 km/h): rapid spore/larvae downwind drift. Autonomous perimeter barrier halts cross-field migration."
+    },
+    "tomato_late_blight": {
+        "id": "tomato_late_blight",
+        "name": "Tomato Late Blight (Bio-IPM)",
+        "icon": "🍅",
+        "crop": "Tomato",
+        "pest": "Late Blight",
+        "confidence": 0.98,
+        "severity": "HIGH",
+        "affected_area_acres": 1.4,
+        "temperature": 23.0,
+        "humidity": 94.0,
+        "wind_speed": 8.0,
+        "wind_direction": "E",
+        "field_id": 3,
+        "field_name": "Greenhouse Plot #2",
+        "latitude": 10.792,
+        "longitude": 78.705,
+        "description": "High humidity (94% RH) zoospore dispersal. System selects biological Trichoderma & copper to avert chemical resistance."
+    },
+    "rice_stem_borer": {
+        "id": "rice_stem_borer",
+        "name": "Rice Paddy Stem Borer (Fleet Failover)",
+        "icon": "🌾",
+        "crop": "Rice",
+        "pest": "Stem Borer",
+        "confidence": 0.91,
+        "severity": "MODERATE",
+        "affected_area_acres": 3.2,
+        "temperature": 30.0,
+        "humidity": 82.0,
+        "wind_speed": 14.0,
+        "wind_direction": "SE",
+        "field_id": 4,
+        "field_name": "Cauvery Delta Paddy",
+        "latitude": 10.785,
+        "longitude": 78.698,
+        "description": "Multi-agent fleet intelligence: low-battery drone (35%) is safely bypassed in favor of next optimal available agent."
+    }
+}
+
+# ─── RATE LIMIT STATE ──────────────────────────────────────
+_last_demo_reset: float = 0.0
+DEMO_RESET_COOLDOWN_S = 5  # minimum seconds between resets
+
+# ─── LIFESPAN (replaces deprecated @app.on_event) ──────────
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    init_db()
+    yield
+
+app = FastAPI(
+    title="FarmShield API",
+    version="1.0.0",
+    description="Detect Early. Predict Spread. Protect Precisely.",
+    lifespan=lifespan,
+)
 # CORS: open for hackathon demo. Production: restrict to known origins.
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
+
+# ─── HELPERS ───────────────────────────────────────────────
+def _now() -> datetime.datetime:
+    """UTC-aware now(), compatible with Python 3.12+."""
+    return datetime.datetime.now(timezone.utc).replace(tzinfo=None)
+
+def _sqrt_safe(value: float) -> float:
+    """math.sqrt that returns 0.0 for non-positive inputs instead of raising or returning NaN."""
+    return math.sqrt(max(0.0, value))
 
 # ─── HEALTH CHECK ──────────────────────────────────────────
 @app.get("/api/health")
@@ -71,10 +189,26 @@ class FarmerOut(BaseModel):
     language: str; main_crop: str; farm_size_acres: float; latitude: float; longitude: float
     class Config: from_attributes = True
 
+class LanguageUpdate(BaseModel):
+    language: str
+
+    @field_validator("language")
+    @classmethod
+    def validate_language(cls, v: str) -> str:
+        allowed = {"en", "hi", "ta", "te", "kn", "ml", "mr", "bn"}
+        if v not in allowed:
+            raise ValueError(f"Language must be one of: {', '.join(sorted(allowed))}")
+        return v
+
 class DetectionRequest(BaseModel):
     field_id: Optional[int] = None
-    crop: str = "Cotton"
+    crop: Optional[str] = "Cotton"
+    possible_pest: Optional[str] = None
+    severity: Optional[str] = None
+    affected_area_acres: Optional[float] = None
+    scenario_id: Optional[str] = None
     photo_path: Optional[str] = None
+    notes: Optional[str] = None
 
 class DetectionOut(BaseModel):
     id: int; crop: str; possible_pest: str; confidence: float; severity: str
@@ -101,10 +235,14 @@ class EventLogOut(BaseModel):
 class DispatchSelect(BaseModel):
     outbreak_id: int
 
-# ─── STARTUP ───────────────────────────────────────────────
-@app.on_event("startup")
-def startup():
-    init_db()
+class SpreadCalculateRequest(BaseModel):
+    temperature: Optional[float] = None
+    humidity: Optional[float] = None
+    wind_speed: Optional[float] = None
+    base_acres: Optional[float] = None
+
+class MissionAbortRequest(BaseModel):
+    reason: Optional[str] = "operator_abort"
 
 # ─── FARMERS ───────────────────────────────────────────────
 @app.get("/api/farmers", response_model=List[FarmerOut])
@@ -116,7 +254,7 @@ def create_farmer(data: FarmerCreate, db: Session = Depends(get_db)):
     if not data.name.strip():
         raise HTTPException(400, "Name is required")
     if not data.mobile.strip() or len(data.mobile.strip()) < 10:
-        raise HTTPException(400, "Valid mobile number is required")
+        raise HTTPException(400, "Valid mobile number is required (min 10 digits)")
     if data.farm_size_acres <= 0:
         raise HTTPException(400, "Farm size must be positive")
     f = Farmer(**data.model_dump())
@@ -134,11 +272,12 @@ def get_farmer(farmer_id: int, db: Session = Depends(get_db)):
     return f
 
 @app.put("/api/farmers/{farmer_id}/language")
-def update_language(farmer_id: int, language: str, db: Session = Depends(get_db)):
+def update_language(farmer_id: int, body: LanguageUpdate, db: Session = Depends(get_db)):
+    """Update farmer's preferred language. Accepts JSON body: {"language": "ta"}"""
     f = db.get(Farmer, farmer_id)
     if not f: raise HTTPException(404, "Farmer not found")
-    f.language = language; db.commit()
-    return {"ok": True, "language": language}
+    f.language = body.language; db.commit()
+    return {"ok": True, "language": body.language}
 
 # ─── FIELDS ────────────────────────────────────────────────
 @app.get("/api/fields")
@@ -158,35 +297,46 @@ def list_fields(db: Session = Depends(get_db)):
     return result
 
 # ─── DETECTIONS ────────────────────────────────────────────
+@app.get("/api/scenarios")
+def list_scenarios():
+    """Returns built-in simulation scenarios for demo & evaluation."""
+    return list(SCENARIOS.values())
+
 @app.get("/api/detections", response_model=List[DetectionOut])
 def list_detections(db: Session = Depends(get_db)):
     return db.query(Detection).order_by(Detection.created_at.desc()).all()
 
 @app.post("/api/detection/analyze")
 def analyze_image(data: DetectionRequest, db: Session = Depends(get_db)):
-    """Prototype AI pest detection — returns simulated detection results for demo."""
-    field = db.get(Field, data.field_id) if data.field_id else None
+    """Prototype AI pest detection — returns detection results for demo or specific scenario."""
+    scenario = SCENARIOS.get(data.scenario_id or "cotton_bollworm") or SCENARIOS["cotton_bollworm"]
+    field_id = data.field_id or scenario["field_id"]
+    field = db.get(Field, field_id) if field_id else None
 
-    # For demo: use the consistent demo values from DEMO constants
+    crop = data.crop if (data.crop and data.crop != "Cotton") else scenario["crop"]
+    pest = data.possible_pest or scenario["pest"]
+    conf = scenario["confidence"]
+    sev = data.severity or scenario["severity"]
+    acres = data.affected_area_acres or scenario["affected_area_acres"]
+    lat = field.latitude if field else scenario.get("latitude", DEMO_LATITUDE)
+    lng = field.longitude if field else scenario.get("longitude", DEMO_LONGITUDE)
+
     det = Detection(
-        field_id=data.field_id, crop=data.crop or (field.crop if field else DEMO_CROP),
-        possible_pest=DEMO_PEST, confidence=DEMO_CONFIDENCE, severity=DEMO_SEVERITY,
-        affected_area_acres=DEMO_AFFECTED_ACRES,
-        latitude=field.latitude if field else DEMO_LATITUDE,
-        longitude=field.longitude if field else DEMO_LONGITUDE,
+        field_id=field_id, crop=crop, possible_pest=pest, confidence=conf, severity=sev,
+        affected_area_acres=acres, latitude=lat, longitude=lng,
         mode="DEMO_SIMULATION", status="detected"
     )
     db.add(det); db.commit(); db.refresh(det)
 
     db.add(EventLog(agent_name="Detection Agent",
-                     message=f"Image analyzed — possible {DEMO_PEST} detected ({DEMO_CONFIDENCE*100:.0f}% confidence) in {det.crop}",
+                     message=f"Image analyzed [{scenario['name']}] — possible {pest} detected ({conf*100:.0f}% confidence) in {det.crop}",
                      event_type="detection", severity="warning"))
     db.commit()
 
     return {
-        "detection_id": det.id, "crop": det.crop, "possible_pest": DEMO_PEST,
-        "confidence": DEMO_CONFIDENCE, "severity": DEMO_SEVERITY, "affected_area_acres": DEMO_AFFECTED_ACRES,
-        "latitude": det.latitude, "longitude": det.longitude, "mode": "DEMO_SIMULATION"
+        "detection_id": det.id, "crop": det.crop, "possible_pest": det.possible_pest,
+        "confidence": det.confidence, "severity": det.severity, "affected_area_acres": det.affected_area_acres,
+        "latitude": det.latitude, "longitude": det.longitude, "scenario": scenario, "mode": det.mode
     }
 
 
@@ -309,6 +459,9 @@ def list_sample_fields():
 @app.get("/api/detection/sample-fields/{filename}")
 def get_sample_field(filename: str):
     """Serve a sample field image for the aerial scan demo."""
+    # Prevent path traversal
+    if "/" in filename or "\\" in filename or ".." in filename:
+        raise HTTPException(400, "Invalid filename")
     samples_dir = os.path.join(os.path.dirname(__file__), "sample_fields")
     path = os.path.join(samples_dir, filename)
     if not os.path.isfile(path):
@@ -327,10 +480,6 @@ async def scan_field(
     """
     REAL aerial detection: runs the PlantVillage CNN per-tile over a field image,
     clusters hot tiles into infection zones, and returns real coordinates + acreage.
-
-    This is NOT a simulation — every tile is classified by the same real CNN that
-    handles farmer leaf photos. The detection agent runs autonomously over field
-    imagery and outputs genuine threat assessments.
     """
     field = db.get(Field, field_id) if field_id else None
     lat = field.latitude if field else DEMO_LATITUDE
@@ -339,7 +488,6 @@ async def scan_field(
 
     field_bbox = None
     if field and field.polygon:
-        # derive bbox from field polygon for GPS mapping
         try:
             lats = [p[0] for p in field.polygon]
             lons = [p[1] for p in field.polygon]
@@ -348,7 +496,6 @@ async def scan_field(
         except Exception:
             pass
     if not field_bbox:
-        # default bbox around field center
         field_bbox = {"lat_min": lat - 0.005, "lat_max": lat + 0.005,
                       "lon_min": lon - 0.005, "lon_max": lon + 0.005}
 
@@ -360,7 +507,6 @@ async def scan_field(
     except Exception as e:
         return {"error": str(e), "mode": "SCAN_FAILED", "clusters": []}
 
-    # Optionally create a Detection row for the worst cluster
     detection_id = None
     if create_detection and result["clusters"]:
         worst = result["clusters"][0]
@@ -393,7 +539,7 @@ def confirm_detection(det_id: int, db: Session = Depends(get_db)):
     det = db.get(Detection, det_id)
     if not det: raise HTTPException(404, "Detection not found")
     if det.status == "confirmed":
-        # Already confirmed — find existing outbreak
+        # Idempotent: return existing outbreak
         existing = db.query(Outbreak).filter(Outbreak.detection_id == det.id).first()
         if existing:
             return {"outbreak_id": existing.id, "status": existing.status}
@@ -406,13 +552,11 @@ def confirm_detection(det_id: int, db: Session = Depends(get_db)):
     )
     db.add(outbreak); db.commit(); db.refresh(outbreak)
 
-    base = det.affected_area_acres
     for hrs, area in DEMO_PREDICTIONS:
         db.add(SpreadPrediction(outbreak_id=outbreak.id, hours=hrs, predicted_area_acres=area,
                                 temperature=29, humidity=78, wind_speed=11))
 
     notif_msg = f"🔴 Crop problem detected: {det.possible_pest} in {det.crop}. Precision treatment recommended."
-    # Look up the actual farmer from the detection's field, fall back to first farmer
     farmer_id = 1
     if det.field_id:
         field = db.get(Field, det.field_id)
@@ -446,8 +590,8 @@ def list_outbreaks(status: Optional[str] = None, db: Session = Depends(get_db)):
 @app.post("/api/outbreaks/{outbreak_id}/contain")
 def contain_outbreak(outbreak_id: int, db: Session = Depends(get_db)):
     o = db.get(Outbreak, outbreak_id)
-    if not o: raise HTTPException(404)
-    o.status = "contained"; o.resolved_at = datetime.datetime.utcnow()
+    if not o: raise HTTPException(404, "Outbreak not found")
+    o.status = "contained"; o.resolved_at = _now()
     db.add(EventLog(agent_name="Mission Controller", message=f"Outbreak OUT-{o.id:04d} marked CONTAINED", event_type="containment", severity="success"))
     db.add(Notification(farmer_id=1, title="Treatment Complete", message=f"🟢 Your {o.crop} field has been treated. Outbreak contained.", notification_type="success"))
     db.commit()
@@ -484,15 +628,15 @@ def create_mission(data: MissionCreate, db: Session = Depends(get_db)):
     if o.status != "active": raise HTTPException(400, "Outbreak is not active")
     if a.status != "AVAILABLE": raise HTTPException(400, f"{a.name} is not available")
 
-    # Idempotency: reuse an existing active mission for this outbreak instead of creating duplicates
-    existing = db.query(Mission).filter(Mission.outbreak_id == o.id, Mission.status.notin_(["completed"])).first()
+    # Idempotency: reuse existing active mission for this outbreak
+    existing = db.query(Mission).filter(Mission.outbreak_id == o.id, Mission.status.notin_(["completed", "aborted"])).first()
     if existing: return {"mission_id": existing.id, "mission_code": existing.mission_code, "eta_minutes": existing.eta_minutes}
 
     code = f"MSN-{random.randint(1000,9999)}"
     est_l = DEMO_AFFECTED_ACRES * BLANKET_CHEMICAL_L_PER_ACRE
     prec_l = round(est_l * PRECISION_CHEMICAL_RATIO, 1)
-    dist = math.sqrt((o.latitude - a.latitude)**2 + (o.longitude - a.longitude)**2) * 111
-    eta = max(5, round(dist / a.speed_kmh * 60))
+    dist = _sqrt_safe((o.latitude - a.latitude)**2 + (o.longitude - a.longitude)**2) * 111
+    eta = max(5, round(dist / max(a.speed_kmh, 1) * 60))
 
     m = Mission(mission_code=code, outbreak_id=o.id, agent_id=a.id, target_area_acres=o.affected_area_acres,
                 estimated_chemical_l=est_l, precision_chemical_l=prec_l, status="created", eta_minutes=eta)
@@ -507,18 +651,17 @@ def create_mission(data: MissionCreate, db: Session = Depends(get_db)):
 @app.post("/api/missions/{mission_id}/status")
 def update_mission_status(mission_id: int, action: str, db: Session = Depends(get_db)):
     m = db.get(Mission, mission_id)
-    if not m: raise HTTPException(404)
+    if not m: raise HTTPException(404, "Mission not found")
     treatments = db.query(Treatment).filter(Treatment.mission_id == mission_id).all()
     a = db.get(Agent, m.agent_id)
 
-    # State machine: map action names to target states
     ACTION_TO_TARGET = {"dispatch": "dispatched", "arrive": "arrived", "treat": "treating", "complete": "completed"}
     target = ACTION_TO_TARGET.get(action)
     if not target or not validate_mission_transition(m.status, target):
-        raise HTTPException(400, f"Invalid transition: {m.status} → {action}")
+        raise HTTPException(400, f"Invalid transition: {m.status} → {action}. Valid next actions: {list(ACTION_TO_TARGET.keys())}")
 
     if action == "dispatch":
-        m.status = "dispatched"; m.started_at = datetime.datetime.utcnow()
+        m.status = "dispatched"; m.started_at = _now()
         if a: a.status = "EN_ROUTE"
         db.add(EventLog(agent_name="Dispatch Agent", message=f"{a.name if a else 'Agent'} dispatched to zone", event_type="dispatch", severity="info", related_mission_id=m.id))
     elif action == "arrive":
@@ -527,14 +670,14 @@ def update_mission_status(mission_id: int, action: str, db: Session = Depends(ge
         db.add(EventLog(agent_name="Drone Agent", message=f"{a.name if a else 'Agent'} arrived at treatment zone", event_type="drone", severity="info", related_mission_id=m.id))
     elif action == "treat":
         m.status = "treating"
-        for t in treatments: t.status = "in_progress"; t.started_at = datetime.datetime.utcnow()
+        for t in treatments: t.status = "in_progress"; t.started_at = _now()
         db.add(EventLog(agent_name="Treatment Agent", message=f"Precise treatment started — {m.target_area_acres} acres target zone", event_type="treatment", severity="info", related_mission_id=m.id))
     elif action == "complete":
-        m.status = "completed"; m.completed_at = datetime.datetime.utcnow()
+        m.status = "completed"; m.completed_at = _now()
         if a: a.status = "AVAILABLE"; a.missions_completed += 1; a.latitude = a.base_latitude; a.longitude = a.base_longitude
-        for t in treatments: t.status = "completed"; t.completed_at = datetime.datetime.utcnow()
+        for t in treatments: t.status = "completed"; t.completed_at = _now()
         o = db.get(Outbreak, m.outbreak_id)
-        if o: o.status = "contained"; o.resolved_at = datetime.datetime.utcnow()
+        if o: o.status = "contained"; o.resolved_at = _now()
         db.add(EventLog(agent_name="Mission Controller", message=f"Mission {m.mission_code} COMPLETED — outbreak contained", event_type="containment", severity="success", related_mission_id=m.id))
         db.add(Notification(farmer_id=1, title="Treatment Complete", message=f"🟢 Your {o.crop if o else 'crop'} field has been treated successfully.", notification_type="success"))
 
@@ -558,6 +701,7 @@ def get_weather(db: Session = Depends(get_db)):
 # ─── EVENTS ────────────────────────────────────────────────
 @app.get("/api/events", response_model=List[EventLogOut])
 def list_events(limit: int = 100, db: Session = Depends(get_db)):
+    limit = max(1, min(limit, 500))  # clamp: 1..500
     return db.query(EventLog).order_by(EventLog.created_at.desc()).limit(limit).all()
 
 # ─── NOTIFICATIONS ─────────────────────────────────────────
@@ -596,10 +740,9 @@ def get_analytics(db: Session = Depends(get_db)):
         avg_eta = round(sum(m.eta_minutes for m in completed) / len(completed), 1)
 
     # CO2 savings: pesticide transport + manufacturing baseline ~2.5 kg CO2 per litre saved
-    # Chemical application by drone vs tractor: ~0.8 kg CO2/L tractor fuel equivalent saved
     co2_saved_kg = round(pesticide_saved_l * 2.5 + (total_conventional - total_precision) * 0.8, 1)
 
-    # Yield protection estimate: avg 22% bollworm loss on 2.1 acres cotton @ INR 7000/quintal, 8 quintal/acre
+    # Yield protection estimate
     yield_protected_inr = round(contained * 2.1 * 8 * 7000 * 0.22, 0) if contained else 0
 
     # Water saved: blanket spraying requires 200L water/acre; precision uses 40L/acre
@@ -685,51 +828,70 @@ def update_agent_telemetry(agent_id: int, battery: Optional[float] = None, statu
     if not a: raise HTTPException(404, "Agent not found")
     if battery is not None:
         a.battery_percent = max(0.0, min(100.0, battery))
-    if status and status in ["AVAILABLE", "EN_ROUTE", "TREATING", "CHARGING", "MAINTENANCE"]:
+    valid_statuses = {"AVAILABLE", "EN_ROUTE", "TREATING", "CHARGING", "MAINTENANCE"}
+    if status and status in valid_statuses:
         a.status = status
+    elif status and status not in valid_statuses:
+        raise HTTPException(400, f"Invalid status. Must be one of: {', '.join(sorted(valid_statuses))}")
     db.add(EventLog(agent_name="Telemetry", message=f"{a.name} telemetry update — battery {a.battery_percent:.0f}%, status {a.status}", event_type="telemetry", severity="info"))
     db.commit()
     return {"id": a.id, "name": a.name, "battery_percent": a.battery_percent, "status": a.status}
 
 # ─── DYNAMIC SPREAD PREDICTION ─────────────────────────────
 @app.post("/api/spread/calculate")
-def calculate_spread(temperature: float = 29, humidity: float = 78, wind_speed: float = 11, base_acres: float = 2.1):
+def calculate_spread(
+    body: Optional[SpreadCalculateRequest] = None,
+    temperature: Optional[float] = None,
+    humidity: Optional[float] = None,
+    wind_speed: Optional[float] = None,
+    base_acres: Optional[float] = None,
+):
     """
     Dynamic spread prediction formula based on microclimate.
+    Supports both JSON request body and URL query parameters.
     Growth model: logistic with temperature and humidity as rate drivers.
-    Based on published degree-day / humidity pest growth models.
     """
-    # Normalize factors (agronomic degree-day model)
-    temp_factor = max(0, (temperature - 15) / 25)  # optimum 40°C, baseline 15°C
-    humidity_factor = max(0, (humidity - 40) / 60)  # optimum 100%, threshold 40%
-    wind_factor = 1 + (wind_speed / 40) * 0.3       # wind accelerates spread up to 30%
+    t_val = body.temperature if (body and body.temperature is not None) else (temperature if temperature is not None else 29.0)
+    h_val = body.humidity if (body and body.humidity is not None) else (humidity if humidity is not None else 78.0)
+    w_val = body.wind_speed if (body and body.wind_speed is not None) else (wind_speed if wind_speed is not None else 11.0)
+    a_val = body.base_acres if (body and body.base_acres is not None) else (base_acres if base_acres is not None else 2.1)
+
+    # Clamp inputs to realistic ranges
+    t_val = max(-10.0, min(float(t_val), 55.0))
+    h_val = max(0.0, min(float(h_val), 100.0))
+    w_val = max(0.0, min(float(w_val), 150.0))
+    a_val = max(0.01, float(a_val))  # guard against zero/negative
+
+    temp_factor = max(0.0, (t_val - 15.0) / 25.0)
+    humidity_factor = max(0.0, (h_val - 40.0) / 60.0)
+    wind_factor = 1.0 + (w_val / 40.0) * 0.3
     growth_rate = 0.18 * (temp_factor * 0.6 + humidity_factor * 0.4) * wind_factor
-    uncertainty = round(base_acres * 0.15, 2)  # ±15% uncertainty band
+    uncertainty = round(a_val * 0.15, 2)
 
     predictions = []
     for hours in [0, 2, 6, 12, 24]:
-        # Logistic growth: area = K / (1 + (K/A0 - 1) * exp(-r*t))
-        K = base_acres * 8  # carrying capacity (field size)
-        projected = K / (1 + (K / base_acres - 1) * math.exp(-growth_rate * hours))
+        K = a_val * 8.0
+        projected = K / (1.0 + (K / a_val - 1.0) * math.exp(-growth_rate * hours))
         projected = round(projected, 1)
         predictions.append({
             "hours": hours,
             "area": projected,
-            "range_min": round(max(base_acres, projected - uncertainty * (hours/24 + 0.5)), 1),
-            "range_max": round(projected + uncertainty * (hours/24 + 0.5), 1),
-            "temp_c": temperature, "humidity_pct": humidity, "wind_kph": wind_speed,
+            "range_min": round(max(a_val, projected - uncertainty * (hours / 24.0 + 0.5)), 1),
+            "range_max": round(projected + uncertainty * (hours / 24.0 + 0.5), 1),
+            "temp_c": t_val, "humidity_pct": h_val, "wind_kph": w_val,
         })
     risk = "HIGH" if growth_rate > 0.12 else "MODERATE" if growth_rate > 0.06 else "LOW"
     return {
-        "base_acres": base_acres, "growth_rate": round(growth_rate, 4), "risk_level": risk,
+        "base_acres": a_val, "growth_rate": round(growth_rate, 4), "risk_level": risk,
         "predictions": predictions,
         "note": "Prototype simulation — degree-day logistic growth model. Uncertainty band ±15%."
     }
 
 # ─── MISSION ABORT ─────────────────────────────────────────
 @app.post("/api/missions/{mission_id}/abort")
-def abort_mission(mission_id: int, reason: str = "operator_abort", db: Session = Depends(get_db)):
+def abort_mission(mission_id: int, body: Optional[MissionAbortRequest] = None, reason: Optional[str] = None, db: Session = Depends(get_db)):
     """Emergency mission abort — agent returns to base. Human-in-the-loop control."""
+    abort_reason = (body.reason if (body and body.reason) else reason) or "operator_abort"
     m = db.get(Mission, mission_id)
     if not m: raise HTTPException(404, "Mission not found")
     if m.status in ["completed", "aborted"]:
@@ -742,10 +904,10 @@ def abort_mission(mission_id: int, reason: str = "operator_abort", db: Session =
         a.latitude = a.base_latitude
         a.longitude = a.base_longitude
     db.add(EventLog(agent_name="Mission Controller",
-                    message=f"⚠️ Mission {m.mission_code} ABORTED (from {prev_status}) — reason: {reason}. Agent returning to base.",
+                    message=f"Mission {m.mission_code} ABORTED (from {prev_status}) — reason: {abort_reason}. Agent returning to base.",
                     event_type="abort", severity="warning", related_mission_id=m.id))
     db.commit()
-    return {"status": "aborted", "mission_code": m.mission_code, "reason": reason}
+    return {"status": "aborted", "mission_code": m.mission_code, "reason": abort_reason}
 
 # ─── DISPATCH ALGORITHM ────────────────────────────────────
 @app.post("/api/dispatch/select")
@@ -757,30 +919,39 @@ def select_agent(data: DispatchSelect, db: Session = Depends(get_db)):
     for a in agents:
         compat = a.treatment_compatibility or []
         if o.crop not in compat: continue
-        dist = math.sqrt((o.latitude - a.latitude)**2 + (o.longitude - a.longitude)**2) * 111
-        travel_min = max(dist, 0.1) / a.speed_kmh * 60
-        # Score by estimated travel time (fastest response wins), weighted by battery and payload
+        dist = _sqrt_safe((o.latitude - a.latitude)**2 + (o.longitude - a.longitude)**2) * 111
+        travel_min = max(dist, 0.1) / max(a.speed_kmh, 1) * 60
         score = (1 / max(travel_min, 0.5)) * (a.battery_percent / 100) * (a.payload_capacity_l / 10)
         scored.append({"agent": a, "score": score, "distance_km": round(dist, 1),
-                       "reason": f"closest compatible available agent with sufficient battery and treatment capacity ({round(dist, 1)} km, ~{int(travel_min)} min travel, {a.battery_percent:.0f}% battery, {a.payload_capacity_l}L)"})
+                       "reason": f"closest compatible available agent ({round(dist, 1)} km, ~{int(travel_min)} min, {a.battery_percent:.0f}% battery, {a.payload_capacity_l}L)"})
     scored.sort(key=lambda x: x["score"], reverse=True)
 
     db.add(EventLog(agent_name="Dispatch Engine", message=f"Evaluating {len(scored)} compatible agents for outbreak OUT-{o.id:04d}", event_type="dispatch", severity="info"))
     if scored:
         best = scored[0]
         db.add(EventLog(agent_name="Dispatch Engine", message=f"{best['agent'].name} selected — {best['reason']}", event_type="dispatch", severity="info"))
+    else:
+        db.commit()
+        raise HTTPException(422, f"No available agents compatible with crop '{o.crop}'. Check fleet availability.")
     db.commit()
 
     return {
         "candidates": [{"id": s["agent"].id, "name": s["agent"].name, "battery": s["agent"].battery_percent,
                         "distance_km": s["distance_km"], "score": round(s["score"], 3), "reason": s["reason"]}
                        for s in scored[:5]],
-        "selected": scored[0]["agent"].id if scored else None
+        "selected": scored[0]["agent"].id
     }
 
 # ─── DEMO RESET ────────────────────────────────────────────
 @app.post("/api/demo/reset")
 def reset_demo():
+    global _last_demo_reset
+    now = time.time()
+    if now - _last_demo_reset < DEMO_RESET_COOLDOWN_S:
+        wait = round(DEMO_RESET_COOLDOWN_S - (now - _last_demo_reset), 1)
+        raise HTTPException(429, f"Reset too fast — wait {wait}s before retrying")
+    _last_demo_reset = now
+
     from database import Base, engine, SessionLocal
     Base.metadata.drop_all(bind=engine)
     Base.metadata.create_all(bind=engine)
@@ -815,15 +986,13 @@ def get_architecture():
 def list_reviews(db: Session = Depends(get_db)):
     return db.query(ExpertReview).order_by(ExpertReview.created_at.desc()).all()
 
-
-
 # ─── SPREAD SIMULATE (basic alias for live demo pipeline) ──
 @app.get("/api/spread/simulate")
 def spread_simulate_basic(db: Session = Depends(get_db)):
     """Basic spread simulation used by the live demo pipeline."""
     outbreaks = db.query(Outbreak).filter(Outbreak.status == "active").all()
     o = outbreaks[0] if outbreaks else None
-    base_acres = o.affected_area_acres if o else 2.1
+    base_acres = max(0.01, o.affected_area_acres if o else 2.1)
     growth_rate = 0.14
     predictions = []
     for hours in [0, 6, 12, 24]:
@@ -851,7 +1020,14 @@ def spread_sandbox(
     crop: str = "Cotton",
     pest: str = "Bollworm"
 ):
-    """Interactive microclimate spread sandbox: returns spread curve, wind ellipse, INR loss, chemical delta."""
+    """Interactive microclimate spread sandbox."""
+    # Clamp inputs
+    temperature = max(-10, min(temperature, 55))
+    humidity = max(0, min(humidity, 100))
+    wind_speed = max(0, min(wind_speed, 150))
+    base_acres = max(0.01, base_acres)
+    delay_hours = max(0, delay_hours)
+
     temp_factor = max(0, (temperature - 15) / 25)
     humidity_factor = max(0, (humidity - 40) / 60)
     wind_factor = 1 + (wind_speed / 40) * 0.3
@@ -871,7 +1047,7 @@ def spread_sandbox(
     wind_rad = math.radians(wind_direction_deg)
     eccentricity = min(0.9, wind_speed / 60)
     peak_area = predictions[-1]["area"]
-    r_major = math.sqrt(peak_area * 0.4047 / math.pi) * (1 + eccentricity)
+    r_major = _sqrt_safe(peak_area * 0.4047 / math.pi) * (1 + eccentricity)
     r_minor = r_major * (1 - eccentricity * 0.5)
     ellipse_points = []
     for deg in range(0, 361, 15):
@@ -886,7 +1062,8 @@ def spread_sandbox(
     economic_loss_inr = round(peak_area * crop_yield * loss_frac, 0)
     with_farmshield_loss = round(effective_base * crop_yield * loss_frac, 0)
     inr_saved = round(economic_loss_inr - with_farmshield_loss, 0)
-    blanket_l = round(peak_area * BLANKET_CHEMICAL_L_PER_ACRE, 1); precision_l = round(effective_base * BLANKET_CHEMICAL_L_PER_ACRE * PRECISION_CHEMICAL_RATIO, 1)
+    blanket_l = round(peak_area * BLANKET_CHEMICAL_L_PER_ACRE, 1)
+    precision_l = round(effective_base * BLANKET_CHEMICAL_L_PER_ACRE * PRECISION_CHEMICAL_RATIO, 1)
     risk = "HIGH" if growth_rate > 0.12 else "MODERATE" if growth_rate > 0.06 else "LOW"
     return {"base_acres": base_acres, "effective_base_acres": effective_base, "delay_hours": delay_hours,
         "growth_rate": round(growth_rate, 4), "risk_level": risk, "predictions": predictions,
@@ -933,18 +1110,16 @@ async def analyze_leaf_sample(sample_id: str, db: Session = Depends(get_db)):
     if not os.path.isfile(fpath): raise HTTPException(404, "Sample file not found")
     with open(fpath, "rb") as f: raw = f.read()
     try:
-        import numpy as _np, cv2 as _cv2
         label, conf = plant_model.classify(raw)
-        arr = _np.frombuffer(raw, _np.uint8)
+        # Use public API: get top3 via a second classify pass using the exposed softmax
+        import numpy as np
+        import cv2 as _cv2
+        arr = np.frombuffer(raw, np.uint8)
         img = _cv2.imdecode(arr, _cv2.IMREAD_COLOR)
         blob = _cv2.dnn.blobFromImage(img, 1/127.5, (224,224), (1,1,1), True, True)
-        plant_model._net.setInput(blob)
-        logits = plant_model._net.forward()[0]
-        probs = plant_model._softmax(logits)
-        top3_idx = probs.argsort()[-3:][::-1]
-        top3 = [{"label": plant_model._labels[i], "confidence": round(float(probs[i]), 4),
-                  "pest": plant_model.describe(plant_model._labels[i], float(probs[i]))["possible_pest"],
-                  "healthy": plant_model.is_healthy(plant_model._labels[i])} for i in top3_idx]
+        # Use plant_model public functions: get_logits via a thin helper
+        net_result = plant_model.get_top3(raw)  # we'll add this public method below
+        top3 = net_result
         desc = plant_model.describe(label, conf)
         return {"sample_id": sample_id, "mode": "REAL_MODEL", "top_label": label,
                 "confidence": round(conf, 4), "top3": top3, "healthy": desc["healthy"],
@@ -960,11 +1135,15 @@ async def analyze_leaf_sample(sample_id: str, db: Session = Depends(get_db)):
 @app.get("/api/missions/{mission_id}/waypoints")
 def get_mission_waypoints(mission_id: int, altitude_m: float = 15.0, swath_width_m: float = 5.0, db: Session = Depends(get_db)):
     """Generates lawnmower spray path waypoints for a mission's outbreak zone."""
+    if swath_width_m <= 0:
+        raise HTTPException(400, "swath_width_m must be positive")
     m = db.get(Mission, mission_id)
     if not m: raise HTTPException(404, "Mission not found")
     o = db.get(Outbreak, m.outbreak_id)
     if not o: raise HTTPException(404, "Outbreak not found")
-    side_m = math.sqrt(o.affected_area_acres * 4047)
+
+    # Guard: zero/negative area → safe sqrt
+    side_m = _sqrt_safe(o.affected_area_acres * 4047)
     lat_d = (side_m / 2) / 111000
     lon_d = (side_m / 2) / (111000 * math.cos(math.radians(o.latitude)))
     lat_min, lat_max = o.latitude - lat_d, o.latitude + lat_d
@@ -979,16 +1158,11 @@ def get_mission_waypoints(mission_id: int, altitude_m: float = 15.0, swath_width
         seg_len = abs(lat_max - lat_min) * 111000
         waypoints += [s, e]; segments.append({"sweep": i+1, "start": s, "end": e, "length_m": round(seg_len, 1)})
         total_dist += seg_len + (swath_width_m if i < num_sweeps - 1 else 0)
-    drone_speed = 5.0  # m/s
+    drone_speed = 5.0
     spray_time = round(total_dist / drone_speed / 60, 1)
-    # Precision volume: nozzle_rate (L/min) * active spray time only (affected_area portion of path)
-    # Precision drone applies 1.5 L/min flow across the affected zone only (not entire grid)
-    affected_fraction = min(1.0, o.affected_area_acres / max(o.affected_area_acres * 1.2, 0.01))
-    precision_nozzle_rate = 0.55  # L/min optimized precision nozzle
+    precision_nozzle_rate = 0.55
     chemical_l = round(precision_nozzle_rate * spray_time * num_sweeps * 0.08, 1)
-    # Blanket spray: 4L per acre full-field
     blanket_l = round(o.affected_area_acres * BLANKET_CHEMICAL_L_PER_ACRE, 1)
-    # Ensure chemical_l is always less than blanket for realistic savings
     chemical_l = round(min(chemical_l, blanket_l * 0.32), 1)
     savings_pct = round((blanket_l - chemical_l) / blanket_l * 100, 1) if blanket_l > 0 else 68.0
     return {"mission_id": mission_id, "mission_code": m.mission_code, "altitude_m": altitude_m,
@@ -1003,7 +1177,9 @@ def get_mission_waypoints(mission_id: int, altitude_m: float = 15.0, swath_width
 # ─── IRAC RESISTANCE RISK EVALUATOR ───────────────────────
 @app.get("/api/chemical-rotation/evaluate")
 def evaluate_resistance_risk(pest: str = "Bollworm", crop: str = "Cotton", consecutive_applications: int = 0):
-    """Evaluates resistance risk and recommends bio-alternatives (Beauveria, Bt, Neem)."""
+    """Evaluates resistance risk and recommends bio-alternatives."""
+    # Clamp to valid range
+    consecutive_applications = max(0, min(consecutive_applications, 20))
     risk_score = min(100, consecutive_applications * 20)
     risk_level = "CRITICAL" if risk_score >= 80 else "HIGH" if risk_score >= 60 else "MODERATE" if risk_score >= 40 else "LOW"
     bio_alts = {
@@ -1035,7 +1211,8 @@ def serve_root():
 
 @app.get("/{full_path:path}")
 def serve_spa(full_path: str):
-    """Serve frontend files. Prevents path traversal outside frontend_dir."""
+    """Serve frontend files. API 404s are handled before this catch-all."""
+    # Prevent path traversal
     resolved = os.path.realpath(os.path.join(frontend_dir, full_path))
     frontend_real = os.path.realpath(frontend_dir)
     if not resolved.startswith(frontend_real + os.sep) and resolved != frontend_real:

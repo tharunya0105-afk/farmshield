@@ -67,12 +67,39 @@ def classify(img_bytes: bytes):
     img = _cv2.imdecode(arr, _cv2.IMREAD_COLOR)
     if img is None:
         raise ValueError("unreadable image")
-    # scalefactor 1/127.5 + mean (1,1,1) => x/127.5 - 1 == (x/255 - .5)/.5 ; swapRB for RGB; crop=True
     blob = _cv2.dnn.blobFromImage(img, scalefactor=1 / 127.5, size=(INPUT_SIZE, INPUT_SIZE),
                                   mean=(1, 1, 1), swapRB=True, crop=True)
     _net.setInput(blob)
     logits = _net.forward()[0]
     return _labels[int(logits.argmax())], float(_softmax(logits)[int(logits.argmax())])
+
+
+def get_top3(img_bytes: bytes) -> list:
+    """
+    Public API: run the model and return top-3 predictions.
+    Returns a list of dicts: {label, confidence, pest, healthy}.
+    Raises on failure — caller should catch and fall back.
+    """
+    _load()
+    arr = np.frombuffer(img_bytes, np.uint8)
+    img = _cv2.imdecode(arr, _cv2.IMREAD_COLOR)
+    if img is None:
+        raise ValueError("unreadable image")
+    blob = _cv2.dnn.blobFromImage(img, scalefactor=1 / 127.5, size=(INPUT_SIZE, INPUT_SIZE),
+                                  mean=(1, 1, 1), swapRB=True, crop=True)
+    _net.setInput(blob)
+    logits = _net.forward()[0]
+    probs = _softmax(logits)
+    top3_idx = probs.argsort()[-3:][::-1]
+    return [
+        {
+            "label": _labels[i],
+            "confidence": round(float(probs[i]), 4),
+            "pest": describe(_labels[i], float(probs[i]))["possible_pest"],
+            "healthy": is_healthy(_labels[i]),
+        }
+        for i in top3_idx
+    ]
 
 
 def _softmax(z: np.ndarray) -> np.ndarray:
