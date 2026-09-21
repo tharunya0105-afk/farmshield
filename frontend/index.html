@@ -1659,6 +1659,7 @@
 
     /* ─────────────────── LIVE DEMO (upgraded split-screen) ─────────────────── */
     function LiveDemo({ onExit, onExpert, lang }) {
+      const t = (k) => tr(lang || 'en', k);
       const defaultScenarios = [
         { id: 'cotton_bollworm', name: 'Cotton Bollworm (Baseline)', icon: '🌿', crop: 'Cotton', pest: 'Bollworm', confidence: 0.94, severity: 'HIGH', affected_area_acres: 2.1, temperature: 29.0, humidity: 78.0, wind_speed: 11.0, field_id: 1, field_name: 'North Cotton Block' },
         { id: 'maize_fall_armyworm', name: 'Maize Fall Armyworm (High Wind)', icon: '🌽', crop: 'Maize', pest: 'Fall Armyworm', confidence: 0.96, severity: 'CRITICAL', affected_area_acres: 4.5, temperature: 33.0, humidity: 65.0, wind_speed: 38.0, field_id: 2, field_name: 'South Maize Field' },
@@ -1705,42 +1706,70 @@
       /* Map init */
       useEffect(() => {
         if (!mapEl.current || mapRef.current) return;
-        const map = L.map(mapEl.current, { zoomControl: false, attributionControl: false });
-        L.tileLayer('https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}', { maxZoom: 20, subdomains: ['mt0', 'mt1', 'mt2', 'mt3'], attribution: 'Google Maps Satellite' }).addTo(map);
-        map.setView([10.7905, 78.7047], 15);
-        L.control.zoom({ position: 'bottomright' }).addTo(map);
-        mapRef.current = map;
-        L.polygon([[10.798,78.695],[10.798,78.705],[10.792,78.705],[10.792,78.695]], { color:'#3a9e3d', weight:2, fillOpacity:0.12 }).addTo(map).bindTooltip('North Cotton Block');
-        L.polygon([[10.793,78.705],[10.793,78.715],[10.787,78.715],[10.787,78.705]], { color:'#3a9e3d', weight:2, fillOpacity:0.12 }).addTo(map).bindTooltip('East Mixed Plot');
+        try {
+          const map = L.map(mapEl.current, { zoomControl: false, attributionControl: false });
+          L.tileLayer('https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}', { maxZoom: 20, subdomains: ['mt0', 'mt1', 'mt2', 'mt3'], attribution: 'Google Maps Satellite' }).addTo(map);
+          map.setView([10.7905, 78.7047], 15);
+          L.control.zoom({ position: 'bottomright' }).addTo(map);
+          mapRef.current = map;
+          setTimeout(() => { if (mapRef.current) mapRef.current.invalidateSize(); }, 150);
+          L.polygon([[10.798,78.695],[10.798,78.705],[10.792,78.705],[10.792,78.695]], { color:'#3a9e3d', weight:2, fillOpacity:0.12 }).addTo(map).bindTooltip('North Cotton Block');
+          L.polygon([[10.793,78.705],[10.793,78.715],[10.787,78.715],[10.787,78.705]], { color:'#3a9e3d', weight:2, fillOpacity:0.12 }).addTo(map).bindTooltip('East Mixed Plot');
+        } catch (e) { console.warn('Map init warning:', e); }
         return () => { if (mapRef.current) { mapRef.current.remove(); mapRef.current = null; } };
       }, []);
 
       const markOutbreak = (lat, lng, acres) => {
         if (!mapRef.current) return;
-        const icon = L.divIcon({ html: `<div class="marker-pin pin-red"></div>`, iconSize:[18,18], iconAnchor:[9,9], className:'' });
-        L.marker([lat, lng], { icon }).addTo(mapRef.current).bindPopup(`<b>🔴 Outbreak zone</b><br>${acres} acres · High risk`);
-        const circle = L.circle([lat, lng], { radius: acres*100, color:'#dc2626', weight:1, fillOpacity:0.10 }).addTo(mapRef.current);
-        mapRef.current.flyTo([lat, lng], 16, { duration: 1.2 });
+        const validLat = Number(lat) || 10.7905;
+        const validLng = Number(lng) || 78.7047;
+        const validAcres = Number(acres) || 2.0;
+        try {
+          mapRef.current.invalidateSize();
+          const icon = L.divIcon({ html: `<div class="marker-pin pin-red"></div>`, iconSize:[18,18], iconAnchor:[9,9], className:'' });
+          L.marker([validLat, validLng], { icon }).addTo(mapRef.current).bindPopup(`<b>🔴 Outbreak zone</b><br>${validAcres} acres · High risk`);
+          L.circle([validLat, validLng], { radius: validAcres*100, color:'#dc2626', weight:1, fillOpacity:0.10 }).addTo(mapRef.current);
+          const size = mapRef.current.getSize();
+          if (size && size.x > 0 && size.y > 0) {
+            mapRef.current.flyTo([validLat, validLng], 16, { duration: 1.2 });
+          } else {
+            mapRef.current.setView([validLat, validLng], 15);
+          }
+        } catch (e) {
+          console.warn('markOutbreak error handled:', e);
+        }
       };
 
       const addContainmentRing = (lat, lng) => {
         if (!mapRef.current) return;
-        const circle = L.circle([lat, lng], { radius: 200, color:'#3a9e3d', weight:3, fillOpacity:0.08, dashArray:'6 4' }).addTo(mapRef.current);
+        const validLat = Number(lat) || 10.7905;
+        const validLng = Number(lng) || 78.7047;
+        try {
+          L.circle([validLat, validLng], { radius: 200, color:'#3a9e3d', weight:3, fillOpacity:0.08, dashArray:'6 4' }).addTo(mapRef.current);
+        } catch (e) {}
       };
 
       const moveAgent = (from, to, agentName) => {
         if (!mapRef.current) return null;
-        const icon = L.divIcon({ html: `<div style="font-size:20px;filter:drop-shadow(0 0 6px #3a9e3d)">🛩️</div>`, iconSize:[24,24], iconAnchor:[12,12], className:'' });
-        const m = L.marker(from, { icon }).addTo(mapRef.current).bindTooltip(agentName);
-        const line = L.polyline([from, to], { color:'#3a9e3d', weight:2, dashArray:'4 6' }).addTo(mapRef.current);
-        const steps = 40; let i = 0;
-        const iv = setInterval(() => {
-          i++;
-          const p = i / steps;
-          m.setLatLng([from[0] + (to[0]-from[0])*p, from[1] + (to[1]-from[1])*p]);
-          if (i >= steps) { clearInterval(iv); }
-        }, 75);
-        return m;
+        const fLat = Number(from && from[0]) || 10.785;
+        const fLng = Number(from && from[1]) || 78.690;
+        const tLat = Number(to && to[0]) || 10.7905;
+        const tLng = Number(to && to[1]) || 78.7047;
+        try {
+          const icon = L.divIcon({ html: `<div style="font-size:20px;filter:drop-shadow(0 0 6px #3a9e3d)">🛩️</div>`, iconSize:[24,24], iconAnchor:[12,12], className:'' });
+          const m = L.marker([fLat, fLng], { icon }).addTo(mapRef.current).bindTooltip(agentName);
+          const line = L.polyline([[fLat, fLng], [tLat, tLng]], { color:'#3a9e3d', weight:2, dashArray:'4 6' }).addTo(mapRef.current);
+          const steps = 40; let i = 0;
+          const iv = setInterval(() => {
+            i++;
+            const p = i / steps;
+            try {
+              m.setLatLng([fLat + (tLat-fLat)*p, fLng + (tLng-fLng)*p]);
+            } catch (err) {}
+            if (i >= steps) { clearInterval(iv); }
+          }, 75);
+          return m;
+        } catch (e) { return null; }
       };
 
       const resetAll = async () => {
@@ -1749,13 +1778,16 @@
         if (mapRef.current) { mapRef.current.remove(); mapRef.current = null; }
         await api('/api/demo/reset', { method: 'POST' });
         setTimeout(() => { if (mapEl.current && !mapRef.current) {
-          const map = L.map(mapEl.current, { zoomControl: false, attributionControl: false });
-          L.tileLayer('https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}', { maxZoom: 20, subdomains: ['mt0', 'mt1', 'mt2', 'mt3'], attribution: 'Google Maps Satellite' }).addTo(map);
-          map.setView([10.7905, 78.7047], 15);
-          L.control.zoom({ position: 'bottomright' }).addTo(map);
-          mapRef.current = map;
-          L.polygon([[10.798,78.695],[10.798,78.705],[10.792,78.705],[10.792,78.695]], { color:'#3a9e3d', weight:2, fillOpacity:0.12 }).addTo(map);
-          L.polygon([[10.793,78.705],[10.793,78.715],[10.787,78.715],[10.787,78.705]], { color:'#3a9e3d', weight:2, fillOpacity:0.12 }).addTo(map);
+          try {
+            const map = L.map(mapEl.current, { zoomControl: false, attributionControl: false });
+            L.tileLayer('https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}', { maxZoom: 20, subdomains: ['mt0', 'mt1', 'mt2', 'mt3'], attribution: 'Google Maps Satellite' }).addTo(map);
+            map.setView([10.7905, 78.7047], 15);
+            L.control.zoom({ position: 'bottomright' }).addTo(map);
+            mapRef.current = map;
+            setTimeout(() => { if (mapRef.current) mapRef.current.invalidateSize(); }, 150);
+            L.polygon([[10.798,78.695],[10.798,78.705],[10.792,78.705],[10.792,78.695]], { color:'#3a9e3d', weight:2, fillOpacity:0.12 }).addTo(map);
+            L.polygon([[10.793,78.705],[10.793,78.715],[10.787,78.715],[10.787,78.705]], { color:'#3a9e3d', weight:2, fillOpacity:0.12 }).addTo(map);
+          } catch (e) {}
         } }, 60);
       };
 
@@ -3413,6 +3445,11 @@
       const [showSensors, setShowSensors] = useState(true);
       const [showFields, setShowFields] = useState(true);
       const [currentTime, setCurrentTime] = useState(new Date().toLocaleTimeString('en-US', { hour12: false }));
+      const [toastMsg, setToastMsg] = useState(null);
+      const showToast = (msg) => {
+        setToastMsg(msg);
+        setTimeout(() => setToastMsg(null), 3200);
+      };
 
       // Drones state with dynamic positions
       const [drones, setDrones] = useState([
@@ -3659,6 +3696,10 @@
 
         tileLayerRef.current = tileLayer;
         mapRef.current = map;
+
+        setTimeout(() => {
+          if (mapRef.current) mapRef.current.invalidateSize();
+        }, 120);
 
         return () => {
           if (mapRef.current) {
@@ -3965,8 +4006,14 @@
           </div>
 
           {/* Map View Container */}
-          <div className="flex-1 relative w-full h-full">
-            <div ref={mapEl} className="w-full h-full z-10" style={{ background: '#0a0f1d' }} />
+          <div className="flex-1 relative min-w-0 min-h-0 w-full overflow-hidden">
+            <div ref={mapEl} className="absolute inset-0 z-10" style={{ background: '#0a0f1d' }} />
+
+            {toastMsg && (
+              <div className="fixed top-16 left-1/2 -translate-x-1/2 z-[9999] bg-emerald-600 text-white px-4 py-2 rounded-full font-bold text-xs shadow-2xl animate-fadeIn border border-emerald-400">
+                {toastMsg}
+              </div>
+            )}
 
             {/* Floating Left Fleet Radar HUD */}
             <div className="absolute top-4 left-4 z-20 max-w-xs w-full flex flex-col gap-2.5 pointer-events-none">
@@ -4243,7 +4290,7 @@
     function App() {
       const [mode, setMode] = useState(() => {
         const m = new URLSearchParams(window.location.search).get('mode');
-        return ['demo', 'farmer', 'expert'].includes(m) ? m : 'landing';
+        return ['demo', 'farmer', 'expert', 'realtime', 'sandbox', 'labscan'].includes(m) ? m : 'landing';
       });
       const [lang, setLang] = useState(() => new URLSearchParams(window.location.search).get('lang') || 'en');
       const [showTour, setShowTour] = useState(false);
