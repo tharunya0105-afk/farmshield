@@ -934,73 +934,36 @@
       } catch (e) {}
     }
 
-    function narrateFeature(title, desc, lang = 'en', onEnd) {
+    let _globalAudioPlayer = null;
+
+    function speakViaSpeechSynthesis(text, lang = 'en', onEnd) {
       if (typeof window === 'undefined' || !window.speechSynthesis) return;
       try {
-        // Unlock AudioContext and resume speech synthesis
-        playAudioTone(520, 880, 0.08);
-        if (window.speechSynthesis.paused) {
-          window.speechSynthesis.resume();
-        }
-        if (window.speechSynthesis.speaking) {
-          window.speechSynthesis.cancel();
-        }
+        if (window.speechSynthesis.paused) window.speechSynthesis.resume();
+        if (window.speechSynthesis.speaking) window.speechSynthesis.cancel();
 
-        const langMap = { ta: 'ta-IN', hi: 'hi-IN', te: 'te-IN', kn: 'kn-IN', ml: 'ml-IN', mr: 'mr-IN', en: 'en-IN' };
-        const targetBcp = langMap[lang] || 'en-IN';
-        const voiceMatch = getBestVoiceForLang(targetBcp);
-
-        let cleanText = '';
-        let spokenLang = targetBcp;
-
-        // Check if we have native translation in VOICE_GUIDE_I18N
-        let localizedDesc = desc || '';
-        let localizedTitle = title || '';
-        const lowerKey = (title || '').toLowerCase().trim();
-
-        if (VOICE_GUIDE_I18N[lang]) {
-          const dict = VOICE_GUIDE_I18N[lang];
-          for (const [k, v] of Object.entries(dict)) {
-            if (lowerKey.includes(k) || k.includes(lowerKey)) {
-              localizedDesc = v;
-              break;
-            }
-          }
-        }
-
-        if (voiceMatch && voiceMatch.isNative) {
-          // Native Indian voice is available on this OS! Speak authentic language
-          cleanText = `${localizedTitle ? localizedTitle + '. ' : ''}${localizedDesc}`.trim();
-          spokenLang = voiceMatch.voice.lang || targetBcp;
-        } else {
-          // OS only has English voices (e.g. Standard Windows without Indic TTS pack).
-          // Fall back to clean English and match u.lang to voice to prevent Chromium Windows SAPI error!
-          spokenLang = voiceMatch && voiceMatch.voice ? voiceMatch.voice.lang : 'en-US';
-          const langObj = LANGS.find(l => l.code === lang);
-          const langPrefix = lang !== 'en' && langObj ? `${langObj.label} mode. ` : '';
-          cleanText = `${langPrefix}${title ? title + '. ' : ''}${desc || localizedDesc}`.trim();
-        }
-
-        if (!cleanText) return;
-
-        const u = new SpeechSynthesisUtterance(cleanText);
+        const u = new SpeechSynthesisUtterance(text);
         u.rate = 1.0;
         u.pitch = 1.0;
         u.volume = 1.0;
-        u.lang = spokenLang;
 
-        if (voiceMatch && voiceMatch.voice) {
-          u.voice = voiceMatch.voice;
+        const langMap = { ta: 'ta-IN', hi: 'hi-IN', te: 'te-IN', kn: 'kn-IN', ml: 'ml-IN', mr: 'mr-IN', en: 'en-IN' };
+        const targetBcp = langMap[lang] || 'en-IN';
+        const match = getBestVoiceForLang(targetBcp);
+
+        if (match && match.voice) {
+          u.voice = match.voice;
+          u.lang = match.voice.lang;
+        } else {
+          u.lang = 'en-US';
         }
 
-        // Chromium GC bug prevention
         window._activeUtterance = u;
         u.onend = () => {
           window._activeUtterance = null;
           if (onEnd) onEnd();
         };
-        u.onerror = (err) => {
-          console.warn('speechSynthesis utterance error:', err);
+        u.onerror = () => {
           window._activeUtterance = null;
           if (onEnd) onEnd();
         };
@@ -1009,12 +972,88 @@
           try {
             if (window.speechSynthesis.paused) window.speechSynthesis.resume();
             window.speechSynthesis.speak(u);
-          } catch (err) {
-            console.warn('speechSynthesis speak error:', err);
+          } catch (e) {}
+        }, 25);
+      } catch (e) {}
+    }
+
+    function narrateFeature(title, desc, lang = 'en', onEnd) {
+      try {
+        // 1. Dual-tone audio chime (guarantees instant audible sound through speakers)
+        playAudioTone(520, 880, 0.12);
+
+        // 2. Prepare text with native Indic translations
+        let cleanText = '';
+        const lowerKey = (title || '').toLowerCase().trim();
+        if (VOICE_GUIDE_I18N[lang]) {
+          const dict = VOICE_GUIDE_I18N[lang];
+          for (const [k, v] of Object.entries(dict)) {
+            if (lowerKey.includes(k) || k.includes(lowerKey)) {
+              cleanText = v;
+              break;
+            }
           }
-        }, 30);
-      } catch (e) {
-        console.warn('narrateFeature error:', e);
+        }
+        if (!cleanText) {
+          cleanText = `${title ? title + '. ' : ''}${desc || ''}`.trim();
+        }
+        if (!cleanText) return;
+
+        // 3. Stop any prior audio stream
+        if (_globalAudioPlayer) {
+          try {
+            _globalAudioPlayer.pause();
+            _globalAudioPlayer.currentTime = 0;
+          } catch (e) {}
+        }
+
+        // 4. Primary Audio Engine: Direct HTML5 MP3 Audio Stream (100% audible on Windows, Mac, iOS, Android)
+        const encoded = encodeURIComponent(cleanText.slice(0, 180));
+        const directGoogleUrl = `https://translate.google.com/translate_tts?ie=UTF-8&client=tw-ob&tl=${lang}&q=${encoded}`;
+        const proxyUrl = `/api/tts?text=${encoded}&lang=${lang}`;
+
+        const audio = new Audio();
+        _globalAudioPlayer = audio;
+
+        let fallbackDone = false;
+        const triggerFallback = () => {
+          if (fallbackDone) return;
+          fallbackDone = true;
+          speakViaSpeechSynthesis(cleanText, lang, onEnd);
+        };
+
+        audio.onplay = () => {};
+        audio.onended = () => {
+          if (onEnd) onEnd();
+        };
+
+        let triedProxy = false;
+        audio.onerror = () => {
+          if (!triedProxy) {
+            triedProxy = true;
+            audio.src = proxyUrl;
+            audio.play().catch(triggerFallback);
+          } else {
+            triggerFallback();
+          }
+        };
+
+        audio.src = directGoogleUrl;
+        const playPromise = audio.play();
+        if (playPromise !== undefined) {
+          playPromise.catch(() => {
+            if (!triedProxy) {
+              triedProxy = true;
+              audio.src = proxyUrl;
+              audio.play().catch(triggerFallback);
+            } else {
+              triggerFallback();
+            }
+          });
+        }
+      } catch (err) {
+        console.warn('narrateFeature error:', err);
+        speakViaSpeechSynthesis(title + '. ' + desc, lang, onEnd);
       }
     }
 

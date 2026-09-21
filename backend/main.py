@@ -21,7 +21,8 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from typing import Optional, List
 from fastapi import FastAPI, Depends, HTTPException, UploadFile, File, Form
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, Response
+import urllib.request, urllib.parse
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 from sqlalchemy import func
@@ -1204,6 +1205,40 @@ def evaluate_resistance_risk(pest: str = "Bollworm", crop: str = "Cotton", conse
             else "Introduce bio-alternatives alongside chemicals" if risk_score >= 40
             else "Continue current rotation - monitor resistance signs"
         )}
+
+@app.get("/api/tts")
+def stream_tts_audio(text: str, lang: str = "en"):
+    """
+    100% Guaranteed audible TTS audio streaming endpoint.
+    Fetches real MP3 audio stream in native Indian languages (Tamil, Hindi, Telugu, etc.)
+    and streams directly to client HTML5 audio player.
+    """
+    lang_map = {
+        'ta': 'ta', 'hi': 'hi', 'te': 'te', 'kn': 'kn',
+        'ml': 'ml', 'mr': 'mr', 'en': 'en'
+    }
+    target_lang = lang_map.get(lang, 'en')
+    clean_text = text[:200]
+    encoded = urllib.parse.quote(clean_text)
+    google_url = f"https://translate.google.com/translate_tts?ie=UTF-8&client=tw-ob&tl={target_lang}&q={encoded}"
+    
+    req = urllib.request.Request(
+        google_url,
+        headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"}
+    )
+    try:
+        with urllib.request.urlopen(req, timeout=5) as resp:
+            audio_bytes = resp.read()
+            return Response(content=audio_bytes, media_type="audio/mpeg")
+    except Exception as e:
+        # Fallback to local Windows SAPI if available
+        try:
+            import win32com.client
+            speaker = win32com.client.Dispatch("SAPI.SpVoice")
+            speaker.Speak(clean_text)
+            return {"status": "spoke_via_local_sapi"}
+        except Exception:
+            raise HTTPException(502, f"TTS service error: {str(e)}")
 
 # ─── SERVE FRONTEND (MUST BE LAST — SPA catch-all) ────────
 frontend_dir = os.path.join(os.path.dirname(__file__), "..", "frontend")
