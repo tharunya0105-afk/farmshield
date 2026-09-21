@@ -2658,7 +2658,8 @@
       const runSample = async (sample) => {
         setSelectedSample(sample.name); setScanning(true); setScanResult(null);
         try {
-          const res = await fetch(sample.path);
+          const sampleUrl = sample.path.startsWith('http') ? sample.path : API + sample.path;
+          const res = await fetch(sampleUrl);
           const blob = await res.blob();
           const fd = new FormData();
           fd.append('file', blob, sample.name);
@@ -2846,7 +2847,7 @@
 
       const analyze = async (sample) => {
         setSelected(sample); setResult(null); setScanning(true);
-        const res = await fetch('/api/detection/leaf-samples/' + sample.id + '/analyze', { method: 'POST' });
+        const res = await fetch(API + '/api/detection/leaf-samples/' + sample.id + '/analyze', { method: 'POST' });
         const data = res.ok ? await res.json() : null;
         setResult(data); setScanning(false);
         if (data && window.speechSynthesis) {
@@ -2863,7 +2864,7 @@
       const analyzeUpload = async (file) => {
         setUploadScanning(true); setUploadResult(null);
         const fd = new FormData(); fd.append('file', file); fd.append('crop', 'Cotton');
-        const res = await fetch('/api/detection/analyze-image', { method: 'POST', body: fd });
+        const res = await fetch(API + '/api/detection/analyze-image', { method: 'POST', body: fd });
         const data = res.ok ? await res.json() : null;
         setUploadResult(data); setUploadScanning(false);
       };

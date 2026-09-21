@@ -32,12 +32,14 @@ def _tile_bytes_to_cv2(img_bytes: bytes):
 def _crop_grid(img, grid: int):
     """Split a cv2 image into grid×grid tiles. Returns list of (tile_cv2, row, col)."""
     h, w = img.shape[:2]
-    tw, th = w // grid, h // grid
+    tw = max(1, w // grid)
+    th = max(1, h // grid)
     tiles = []
     for r in range(grid):
         for c in range(grid):
             tile = img[r*th:(r+1)*th, c*tw:(c+1)*tw]
-            tiles.append((tile, r, c))
+            if tile.shape[0] > 0 and tile.shape[1] > 0:
+                tiles.append((tile, r, c))
     return tiles, tw, th
 
 
@@ -67,16 +69,22 @@ def scan_field(img_bytes: bytes, field_area_acres: float = 42.0,
     import plant_model, cv2
 
     img = _tile_bytes_to_cv2(img_bytes)
-    if img is None:
+    if img is None or img.size == 0:
         raise ValueError("unreadable image")
 
-    tiles_data, tw, th = _crop_grid(img, GRID)
     h, w = img.shape[:2]
+    if h < 64 or w < 64:
+        img = cv2.resize(img, (max(w, 64), max(h, 64)), interpolation=cv2.INTER_LINEAR)
+        h, w = img.shape[:2]
+
+    tiles_data, tw, th = _crop_grid(img, GRID)
 
     tile_results = []
     hot_set = set()
 
     for cv2_tile, r, c in tiles_data:
+        if cv2_tile is None or cv2_tile.size == 0 or cv2_tile.shape[0] == 0 or cv2_tile.shape[1] == 0:
+            continue
         # convert tile to bytes for the classifier
         _, buf = cv2.imencode('.jpg', cv2_tile)
         raw = buf.tobytes()
