@@ -233,7 +233,7 @@ DEMO_CROP = "Cotton"
 DEMO_CONFIDENCE = 0.94
 DEMO_SEVERITY = "HIGH"
 DEMO_AFFECTED_ACRES = 2.1
-DEMO_LATITUDE = 10.790
+DEMO_LATITUDE = 10.8790
 DEMO_LONGITUDE = 78.710
 DEMO_FIELD_ID = 3
 DEMO_PREDICTIONS = [(0, 2.1), (2, 3.2), (6, 5.5), (12, 8.7), (24, 14.2)]
@@ -248,7 +248,7 @@ def seed_data(db):
 
     # Farmers
     farmers = [
-        Farmer(name="Ramasamy K", mobile="9876543210", village="Lalgudi", district="Tiruchirappalli", state="Tamil Nadu", language="ta", main_crop="Cotton", farm_size_acres=42, latitude=10.7905, longitude=78.7047),
+        Farmer(name="Ramasamy K", mobile="9876543210", village="Lalgudi", district="Tiruchirappalli", state="Tamil Nadu", language="ta", main_crop="Cotton", farm_size_acres=42, latitude=10.8750, longitude=78.8250),
         Farmer(name="Suresh Babu", mobile="9876543211", village="Musiri", district="Tiruchirappalli", state="Tamil Nadu", language="ta", main_crop="Rice", farm_size_acres=28, latitude=10.8500, longitude=78.6200),
         Farmer(name="Lakshmi Devi", mobile="9876543212", village="Manapparai", district="Tiruchirappalli", state="Tamil Nadu", language="hi", main_crop="Chilli", farm_size_acres=15, latitude=10.6090, longitude=78.5290),
         Farmer(name="Murugan S", mobile="9876543213", village="Thuraiyur", district="Tiruchirappalli", state="Tamil Nadu", language="ta", main_crop="Groundnut", farm_size_acres=20, latitude=10.9250, longitude=78.6270),
@@ -259,9 +259,9 @@ def seed_data(db):
 
     # Farms & Fields
     field_data = [
-        ("FarmShield Demo Farm", 0, "North Cotton Block", "Cotton", 12, "Flowering", "healthy", 10.795, 78.700, [[10.798,78.695],[10.798,78.705],[10.792,78.705],[10.792,78.695]]),
-        ("FarmShield Demo Farm", 0, "South Cotton Block", "Cotton", 15, "Flowering", "healthy", 10.786, 78.700, [[10.789,78.695],[10.789,78.705],[10.783,78.705],[10.783,78.695]]),
-        ("FarmShield Demo Farm", 0, "East Mixed Plot", "Cotton", 15, "Boll Formation", "stressed", 10.790, 78.710, [[10.793,78.705],[10.793,78.715],[10.787,78.715],[10.787,78.705]]),
+        ("FarmShield Demo Farm", 0, "North Cotton Block", "Cotton", 12, "Flowering", "healthy", 10.8790, 78.8230, [[10.8820, 78.8200], [10.8820, 78.8270], [10.8760, 78.8270], [10.8760, 78.8200]]),
+        ("FarmShield Demo Farm", 0, "South Cotton Block", "Cotton", 15, "Flowering", "healthy", 10.8720, 78.8220, [[10.8750, 78.8190], [10.8750, 78.8260], [10.8690, 78.8260], [10.8690, 78.8190]]),
+        ("FarmShield Demo Farm", 0, "East Mixed Plot", "Cotton", 15, "Boll Formation", "stressed", 10.8740, 78.8290, [[10.8770, 78.8260], [10.8770, 78.8330], [10.8710, 78.8330], [10.8710, 78.8260]]),
         ("Suresh Farm", 1, "Paddy Field North", "Rice", 14, "Grain Filling", "healthy", 10.850, 78.620, [[10.853,78.615],[10.853,78.625],[10.847,78.625],[10.847,78.615]]),
         ("Suresh Farm", 1, "Paddy Field South", "Rice", 14, "Grain Filling", "stressed", 10.845, 78.620, [[10.848,78.615],[10.848,78.625],[10.842,78.625],[10.842,78.615]]),
         ("Lakshmi Farm", 2, "Chilli Plot 1", "Chilli", 8, "Flowering", "healthy", 10.609, 78.529, [[10.611,78.527],[10.611,78.531],[10.607,78.531],[10.607,78.527]]),

@@ -59,9 +59,10 @@ SCENARIOS = {
         "wind_speed": 11.0,
         "wind_direction": "NE",
         "field_id": 1,
-        "field_name": "North Cotton Block",
-        "latitude": 10.795,
-        "longitude": 78.700,
+        "field_name": "North Cotton Block — Lalgudi Delta",
+        "latitude": 10.8790,
+        "longitude": 78.8230,
+        "leaf_image": "cotton_bollworm.jpg",
         "description": "Standard baseline: high humidity promotes bollworm infestation. Rapid drone containment saves 78.6% pesticide volume."
     },
     "maize_fall_armyworm": {
@@ -78,9 +79,10 @@ SCENARIOS = {
         "wind_speed": 38.0,
         "wind_direction": "SW",
         "field_id": 2,
-        "field_name": "South Maize Field",
-        "latitude": 10.788,
-        "longitude": 78.712,
+        "field_name": "South Maize Field — Cauvery Basin",
+        "latitude": 10.8710,
+        "longitude": 78.8280,
+        "leaf_image": "maize_armyworm.jpg",
         "description": "Severe wind surge (38 km/h): rapid spore/larvae downwind drift. Autonomous perimeter barrier halts cross-field migration."
     },
     "tomato_late_blight": {
@@ -97,9 +99,10 @@ SCENARIOS = {
         "wind_speed": 8.0,
         "wind_direction": "E",
         "field_id": 3,
-        "field_name": "Greenhouse Plot #2",
-        "latitude": 10.792,
-        "longitude": 78.705,
+        "field_name": "Organic Vegetable Plot — Kollidam",
+        "latitude": 10.8740,
+        "longitude": 78.8190,
+        "leaf_image": "tomato_blight.jpg",
         "description": "High humidity (94% RH) zoospore dispersal. System selects biological Trichoderma & copper to avert chemical resistance."
     },
     "rice_stem_borer": {
@@ -116,9 +119,10 @@ SCENARIOS = {
         "wind_speed": 14.0,
         "wind_direction": "SE",
         "field_id": 4,
-        "field_name": "Cauvery Delta Paddy",
-        "latitude": 10.785,
-        "longitude": 78.698,
+        "field_name": "East Paddy Wetland — Lalgudi",
+        "latitude": 10.8810,
+        "longitude": 78.8310,
+        "leaf_image": "rice_stem_borer.jpg",
         "description": "Multi-agent fleet intelligence: low-battery drone (35%) is safely bypassed in favor of next optimal available agent."
     }
 }
