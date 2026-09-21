@@ -110,6 +110,19 @@
     .no-scrollbar::-webkit-scrollbar { display:none; }
     .pressable:active { transform:scale(0.97); }
     .pressable { transition:transform .1s ease; }
+
+    /* High-contrast mode for low-vision users */
+    .high-contrast { filter: contrast(1.8) saturate(0.3); }
+    .high-contrast .bg-white { background: #000 !important; color: #fff !important; }
+    .high-contrast .text-ink-800, .high-contrast .text-ink-700, .high-contrast .text-ink-600, .high-contrast .text-ink-500 { color: #fff !important; }
+    .high-contrast .bg-brand-600 { background: #000 !important; border: 3px solid #fff !important; }
+    .high-contrast .border { border-color: #fff !important; }
+    .high-contrast .rounded-app { border-radius: 4px !important; }
+    .high-contrast button { min-height: 56px !important; min-width: 56px !important; font-size: 18px !important; font-weight: 700 !important; }
+    .high-contrast .text-xs { font-size: 16px !important; }
+    .high-contrast .text-sm { font-size: 20px !important; }
+    .high-contrast .text-base { font-size: 22px !important; }
+    .high-contrast .text-xl { font-size: 28px !important; }
     .glass { backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px); }
     .pulse-ring-anim { animation: pulseRing 2s ease-out infinite; }
     .pulse-ring-red { animation: pulseRingRed 1.5s ease-out infinite; }
@@ -490,6 +503,91 @@
         prototypeNote: 'சிமுலேடட் டேட்டாவுடன் கூடிய புரோட்டோடைப் டெமோ.',
         pestRisk: 'தற்போதைய பூச்சி ஆபத்து', weatherAdvisory: 'வானிலை ஆலோசனை',
       },
+      hi: {
+        greeting: 'नमस्ते, किसान', myFarm: 'मेरा कपास खेत', location: 'तमिलनाडु · भारत',
+        cropStatus: 'फसल की स्थिति', healthy: 'स्वस्थ', attention: 'ध्यान दें',
+        checkCrop: 'फसल जांचें', speak: 'बोलें', getHelp: 'मदद लें', viewHistory: 'इतिहास देखें', running: 'चल रहा है…', cameraGallery: 'कैमरा · गैलरी',
+        todayMorning: 'आज · सुबह', daysAgo3: '3 दिन पहले', precisionTreatment: 'सटीक उपचार', completed: 'पूर्ण', cropCotton: 'कपास',
+        possiblePest: 'संभावित कीट पाया गया', possibleIssue: 'संभावित बोलवर्म', risk: 'जोखिम', riskHigh: 'उच्च',
+        affectedArea: 'प्रभावित क्षेत्र', acres: 'एकड़', whatToDo: 'क्या करना है?',
+        recommend: 'FarmShield क्षेत्र सहायता की सिफारिश करता है.',
+        needHelp: 'मदद चाहिए?', helpDesc: 'FarmShield प्रभावित क्षेत्र के लिए उपचार मिशन समन्वित कर सकता है.',
+        requestHelp: 'मदद का अनुरोध', helpRequested: 'मदद का अनुरोध किया', helpQueued: 'आपका खेत प्रतिक्रिया कतार में जोड़ा गया.',
+        treatmentDone: 'उपचार पूर्ण', treatmentDoneDesc: 'आपके कपास खेत का उपचार पूर्ण हो गया.',
+        viewDetails: 'विवरण देखें', recentChecks: 'हाल की जांचें', recentAlerts: 'हाल की अलर्ट',
+        treatmentHistory: 'उपचार इतिहास', noAlerts: 'अभी कोई अलर्ट नहीं',
+        voiceUnavailable: 'इस डिवाइस पर वॉयस इनपुट उपलब्ध नहीं है.',
+        voiceGuide: 'जोर से पढ़ें', voiceGuideOn: 'वॉयस गाइड चालू', voiceGuideOff: 'वॉयस गाइड बंद',
+        savedOffline: 'फोन में सहेजा गया', homeGreetingVoice: 'FarmShield. आपका खेत खुला है. फसल जांचने के लिए हरे बटन पर टैप करें.',
+        possibleIssueLabel: 'संभावित समस्या',
+        takePhoto: 'प्रभावित पत्ती की फोटो लें',
+        photoHint: 'पत्ती से फ्रेम भरें. टमाटर, आलू, मक्का और 10+ फसलों पर काम करता है.',
+        healthyResult: 'फसल स्वस्थ दिखती है',
+        healthyDesc: 'फोटो में कोई बीमारी दिखाई नहीं दे रही.',
+        checkAnother: 'दूसरी पत्ती जांचें',
+        photoUnclear: 'फोटो स्पष्ट नहीं है', retakeDesc: 'करीब आएं, फोन स्थिर रखें.', retake: 'फोटो फिर से लें',
+        realModelNote: 'ऑन-डिवाइस फसल-रोग मॉडल (PlantVillage, 38 श्रेणियां) द्वारा विश्लेषित.',
+        featurePhoneTitle: 'स्मार्टफोन नहीं है? फिर भी अलर्ट मिलेंगे',
+        featurePhoneDesc: 'वही अलर्ट किसी भी फोन पर पहुंचते हैं — SMS या आपकी भाषा में वॉयस कॉल.',
+        smsLabel: 'SMS पूर्वावलोकन', ivrLabel: 'वॉयस कॉल (IVR) पूर्वावलोकन',
+        smsAlert: 'FARMSHIELD: आपके कपास में संभावित कीट (2.1 एकड़). मदद का अनुरोध किया गया.',
+        smsDone: 'FARMSHIELD: आपके कपास खेत का उपचार पूर्ण. 2.1 एकड़ उपचारित.',
+        ivrText: 'आपकी भाषा में कॉल: "अपनी फसल की स्थिति सुनने के लिए 1 दबाएं."',
+        offlineQueued: 'नेटवर्क नहीं — सहेजा गया. सिग्नल लौटने पर भेजा जाएगा.',
+        offlineBanner: 'ऑफलाइन — रिपोर्ट फोन में सहेजी गई',
+        syncedToast: 'कनेक्शन बहाल — कतार में रिपोर्ट भेजी गई.',
+        queuedCount: 'रिपोर्ट भेजने की प्रतीक्षा में', queuedCountPlural: 'रिपोर्ट भेजने की प्रतीक्षा में',
+        listening: 'सुन रहा है…',
+        pestRisk: 'वर्तमान कीट जोखिम', weatherAdvisory: 'मौसम सलाह',
+      },
+      te: {
+        greeting: 'శుభోదయం, రైతు', myFarm: 'నా పత్తి పొలం', location: 'తమిళనాడు · భారతదేశం',
+        cropStatus: 'పంట స్థితి', healthy: 'ఆరోగ్యంగా ఉంది', attention: 'శ్రద్ధ అవసరం',
+        checkCrop: 'పంటను తనిఖీ చేయండి', speak: 'మాట్లాడండి', getHelp: 'సహాయం పొందండి',
+        cameraGallery: 'కెమేరా · గ్యాలరీ', possiblePest: 'సంభావ్య చీడపీడలు కనుగొనబడ్డాయి',
+        possibleIssue: 'సంభావ్య బోల్ వర్మ్', risk: 'ప్రమాదం', riskHigh: 'అధికం',
+        acres: 'ఎకరాలు', recommend: 'FarmShield పొలం సహాయాన్ని సిఫార్సు చేస్తుంది.',
+        voiceUnavailable: 'ఈ పరికరంలో వాయిస్ అందుబాటులో లేదు.',
+        voiceGuide: 'బిగ్గరగా చదవండి', voiceGuideOn: 'వాయిస్ గైడ్ ఆన్', savedOffline: 'ఫోన్‌లో సేవ్ చేయబడింది',
+        offlineBanner: 'ఆఫ్‌లైన్ — నివేదికలు ఫోన్‌లో సేవ్ చేయబడ్డాయి',
+        pestRisk: 'ప్రస్తుత చీడపీడల ప్రమాదం', weatherAdvisory: 'వాతావరణ సలహా',
+      },
+      kn: {
+        greeting: 'ಶುಭೋದಯ, ರೈತ', myFarm: 'ನನ್ನ ಹತ್ತಿ ಹೊಲ', location: 'ತಮಿಳುನಾಡು · ಭಾರತ',
+        cropStatus: 'ಬೆಳೆ ಸ್ಥಿತಿ', healthy: 'ಆರೋಗ್ಯಕರ', attention: 'ಗಮನ ಅಗತ್ಯ',
+        checkCrop: 'ಬೆಳೆ ಪರಿಶೀಲಿಸಿ', speak: 'ಮಾತನಾಡಿ', getHelp: 'ಸಹಾಯ ಪಡೆಯಿರಿ',
+        cameraGallery: 'ಕ್ಯಾಮರಾ · ಗ್ಯಾಲರಿ', possiblePest: 'ಸಂಭಾವ್ಯ ಕೀಟ ಪತ್ತೆ',
+        possibleIssue: 'ಸಂಭಾವ್ಯ ಬೋಲ್‌ವರ್ಮ್', risk: 'ಅಪಾಯ', riskHigh: 'ಹೆಚ್ಚು',
+        acres: 'ಎಕರೆ', recommend: 'FarmShield ಹೊಲ ಸಹಾಯವನ್ನು ಶಿಫಾರಸು ಮಾಡುತ್ತದೆ.',
+        voiceUnavailable: 'ಈ ಸಾಧನದಲ್ಲಿ ಧ್ವನಿ ಲಭ್ಯವಿಲ್ಲ.',
+        voiceGuide: 'ಜೋರಾಗಿ ಓದಿ', voiceGuideOn: 'ಧ್ವನಿ ಮಾರ್ಗದರ್ಶಿ ಆನ್', savedOffline: 'ಫೋನ್‌ನಲ್ಲಿ ಉಳಿಸಲಾಗಿದೆ',
+        offlineBanner: 'ಆಫ್‌ಲೈನ್ — ವರದಿಗಳು ಫೋನ್‌ನಲ್ಲಿ ಉಳಿಸಲಾಗಿದೆ',
+        pestRisk: 'ಪ್ರಸ್ತುತ ಕೀಟ ಅಪಾಯ', weatherAdvisory: 'ಹವಾಮಾನ ಸಲಹೆ',
+      },
+      ml: {
+        greeting: 'സുപ്രഭാതം, കർഷകൻ', myFarm: 'എൻ്റെ പരുത്തി വയൽ', location: 'തമിഴ്‌നാട് · ഇന്ത്യ',
+        cropStatus: 'വിള അവസ്ഥ', healthy: 'ആരോഗ്യകരം', attention: 'ശ്രദ്ധ ആവശ്യം',
+        checkCrop: 'വിള പരിശോധിക്കുക', speak: 'സംസാരിക്കുക', getHelp: 'സഹായം നേടുക',
+        cameraGallery: 'ക്യാമറ · ഗ്യാലറി', possiblePest: 'സാധ്യമായ കീട കണ്ടെത്തി',
+        possibleIssue: 'സാധ്യമായ ബോൾവേം', risk: 'അപകടം', riskHigh: 'ഉയർന്ന',
+        acres: 'ഏക്കർ', recommend: 'FarmShield വയൽ സഹായം ശുപാർശ ചെയ്യുന്നു.',
+        voiceUnavailable: 'ഈ ഉപകരണത്തിൽ വോയ്സ് ലഭ്യമല്ല.',
+        voiceGuide: 'ഉറക്കെ വായിക്കുക', voiceGuideOn: 'വോയ്സ് ഗൈഡ് ഓൺ', savedOffline: 'ഫോണിൽ സേവ് ചെയ്തു',
+        offlineBanner: 'ഓഫ്‌ലൈൻ — റിപ്പോർട്ടുകൾ ഫോണിൽ സേവ് ചെയ്തു',
+        pestRisk: 'നിലവിലെ കീട അപകടം', weatherAdvisory: 'കാലാവസ്ഥ ഉപദേശം',
+      },
+      mr: {
+        greeting: 'सुप्रभात, शेतकरी', myFarm: 'माझे कापूस शेत', location: 'तमिळनाडू · भारत',
+        cropStatus: 'पिकाची स्थिती', healthy: 'निरोगी', attention: 'लक्ष द्या',
+        checkCrop: 'पीक तपासा', speak: 'बोला', getHelp: 'मदत घ्या',
+        cameraGallery: 'कॅमेरा · गॅलरी', possiblePest: 'संभाव्य कीड आढळले',
+        possibleIssue: 'संभाव्य बोलवर्म', risk: 'धोका', riskHigh: 'उच्च',
+        acres: 'एकर', recommend: 'FarmShield शेत मदतीचा शिफारस करतो.',
+        voiceUnavailable: 'या उपकरणावर व्हॉइस उपलब्ध नाही.',
+        voiceGuide: 'मोठ्याने वाचा', voiceGuideOn: 'व्हॉइस मार्गदर्शन चालू', savedOffline: 'फोनमध्ये जतन केले',
+        offlineBanner: 'ऑफलाईन — अहवाल फोनमध्ये जतन केले',
+        pestRisk: 'सध्याचा कीड धोका', weatherAdvisory: 'हवामान सल्ला',
+      },
     };
     const tr = (lang, key) => (T[lang] && T[lang][key]) || T.en[key] || key;
 
@@ -847,8 +945,11 @@
       const [photo, setPhoto] = useState(null);
       const [scanRes, setScanRes] = useState(null);
       const [weather, setWeather] = useState(null);
+      const [highContrast, setHighContrast] = useState(false);
       const fileRef = useRef(null);
       const timerRef = useRef(null);
+      // Haptic feedback for blind/motor-impaired users
+      const haptic = (ms = 50) => { try { navigator.vibrate && navigator.vibrate(ms); } catch(e) {} };
 
       useEffect(() => { api('/api/outbreaks?status=active').then(o => setDemoOutbreak((o && o[0]) || null)); }, []);
       useEffect(() => { api('/api/weather').then(w => setWeather(w)); }, []);
@@ -1122,13 +1223,13 @@
       const riskColor = pestRisk === 'HIGH' ? 'text-red-600 bg-red-50' : pestRisk === 'MODERATE' ? 'text-amber2-500 bg-amber2-50' : 'text-brand-600 bg-brand-50';
 
       return (
-        <div className="h-full relative bg-paper-100 max-w-md mx-auto sm:border-x sm:border-paper-200">
+        <div className={`h-full relative bg-paper-100 max-w-md mx-auto sm:border-x sm:border-paper-200 ${highContrast ? 'high-contrast' : ''}`}>
           {photoInput}
           {toast && (
             <div role="status" aria-live="polite" className="absolute top-3 inset-x-4 z-50 bg-ink-800 text-white text-sm rounded-app px-4 py-3 shadow-raised">{toast}</div>
           )}
           <div className="absolute inset-0 bottom-14 overflow-y-auto no-scrollbar">
-            {tab === 'home' && <FarmerHome t={t} lang={lang} setLang={setLang} hasAlert={hasAlert} beginCheck={beginCheck} startVoice={startVoice} voiceState={voiceState} onExit={onExit} demoOutbreak={demoOutbreak} online={online} queued={queued} voiceGuide={voiceGuide} toggleVoiceGuide={toggleVoiceGuide} weather={weather} pestRisk={pestRisk} riskColor={riskColor} />}
+            {tab === 'home' && <FarmerHome t={t} lang={lang} setLang={setLang} hasAlert={hasAlert} beginCheck={beginCheck} startVoice={startVoice} voiceState={voiceState} onExit={onExit} demoOutbreak={demoOutbreak} online={online} queued={queued} voiceGuide={voiceGuide} toggleVoiceGuide={toggleVoiceGuide} weather={weather} pestRisk={pestRisk} riskColor={riskColor} highContrast={highContrast} setHighContrast={setHighContrast} haptic={haptic} />}
             {tab === 'farm' && <FarmerFarm t={t} hasAlert={hasAlert} />}
             {tab === 'alerts' && <FarmerAlerts t={t} demoOutbreak={demoOutbreak} />}
             {tab === 'profile' && <FarmerProfile t={t} lang={lang} setLang={setLang} online={online} simOffline={simOffline} setSimOffline={v => { setSimOffline(v); if (v) setOnline(false); else { setOnline(true); flushQueue(); } }} />}
@@ -1138,9 +1239,9 @@
       );
     }
 
-    function FarmerHome({ t, lang, setLang, hasAlert, beginCheck, startVoice, voiceState, onExit, demoOutbreak, online, queued, voiceGuide, toggleVoiceGuide, weather, pestRisk, riskColor }) {
+    function FarmerHome({ t, lang, setLang, hasAlert, beginCheck, startVoice, voiceState, onExit, demoOutbreak, online, queued, voiceGuide, toggleVoiceGuide, weather, pestRisk, riskColor, highContrast, setHighContrast, haptic }) {
       return (
-        <div>
+        <div role="main" aria-label="FarmShield Farmer App">
           <div className="bg-white border-b border-paper-200 px-4 pt-4 pb-4">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2">
@@ -1155,6 +1256,10 @@
                 <button onClick={toggleVoiceGuide} aria-label={t('voiceGuide')}
                   className={`p-1.5 rounded-lg ${voiceGuide ? 'text-brand-600 bg-brand-50' : 'text-ink-400 hover:bg-paper-100'}`}>
                   {voiceGuide ? I.volume('w-5 h-5') : I.volumeOff('w-5 h-5')}
+                </button>
+                <button onClick={() => { haptic(); setHighContrast(c => !c); }} aria-label="Toggle high contrast mode"
+                  className={`p-1.5 rounded-lg ${highContrast ? 'text-amber2-500 bg-amber2-50' : 'text-ink-400 hover:bg-paper-100'}`}>
+                  {I.accessibility('w-5 h-5')}
                 </button>
                 <button onClick={onExit} className="p-1.5 rounded-lg text-ink-400 hover:bg-paper-100" aria-label="Exit">{I.settings('w-5 h-5')}</button>
               </div>
@@ -1199,7 +1304,7 @@
             )}
 
             {/* Primary action */}
-            <button onClick={beginCheck}
+            <button onClick={() => { haptic(); beginCheck(); }} aria-label={t('checkCrop')}
               className="w-full bg-brand-600 text-white rounded-app py-4 px-5 flex items-center gap-4 shadow-card pressable text-left">
               <span className="w-11 h-11 rounded-full bg-white/15 flex items-center justify-center">{I.camera('w-6 h-6')}</span>
               <span className="flex-1">
@@ -1210,12 +1315,12 @@
             </button>
 
             <div className="grid grid-cols-2 gap-3">
-              <button onClick={startVoice}
+              <button onClick={() => { haptic(); startVoice(); }} aria-label={t('speak')}
                 className="bg-white border border-paper-200 rounded-app py-4 px-4 flex flex-col items-center gap-2 shadow-card pressable text-center">
                 <span className={voiceState === 'listening' ? 'text-red-500' : 'text-brand-600'}>{I.mic('w-6 h-6')}</span>
                 <span className="text-sm font-medium text-ink-700">{voiceState === 'listening' ? t('listening') : t('speak')}</span>
               </button>
-              <button onClick={() => beginCheck()}
+              <button onClick={() => { haptic(); beginCheck(); }} aria-label={t('getHelp')}
                 className="bg-white border border-paper-200 rounded-app py-4 px-4 flex flex-col items-center gap-2 shadow-card pressable text-center">
                 <span className="text-brand-600">{I.helpCircle('w-6 h-6')}</span>
                 <span className="text-sm font-medium text-ink-700">{t('getHelp')}</span>
