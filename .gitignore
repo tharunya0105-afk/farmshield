@@ -52,3 +52,4 @@ npm-debug.log*
 # backend/model_store/*.onnx  # do NOT gitignore these
 
 .vercel
+scratch/
