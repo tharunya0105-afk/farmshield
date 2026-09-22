@@ -249,6 +249,209 @@ class SpreadCalculateRequest(BaseModel):
 class MissionAbortRequest(BaseModel):
     reason: Optional[str] = "operator_abort"
 
+class FarmerLocationUpdate(BaseModel):
+    latitude: float
+    longitude: float
+    village: Optional[str] = None
+    district: Optional[str] = None
+    state: Optional[str] = None
+    pincode: Optional[str] = None
+    farm_name: Optional[str] = None
+    farm_size_acres: Optional[float] = None
+    polygon: Optional[list] = None
+
+class FieldCreate(BaseModel):
+    farm_id: Optional[int] = None
+    name: str = "My Field"
+    crop: str = "Cotton"
+    area_acres: float = 2.1
+    growth_stage: str = "Flowering"
+    latitude: float = 10.7905
+    longitude: float = 78.7047
+    polygon: Optional[list] = None
+
+class FieldUpdate(BaseModel):
+    name: Optional[str] = None
+    crop: Optional[str] = None
+    area_acres: Optional[float] = None
+    growth_stage: Optional[str] = None
+    health_status: Optional[str] = None
+    latitude: Optional[float] = None
+    longitude: Optional[float] = None
+    polygon: Optional[list] = None
+
+# ─── INDIA NATIONAL INTELLIGENCE CONSTANTS ─────────────────
+# India's 15 Planning Commission Agro-Climatic Zones
+INDIA_AGRO_ZONES = [
+    {"zone": 1, "name": "Western Himalayan Region", "lat_min": 30.0, "lat_max": 36.0, "lon_min": 73.0, "lon_max": 80.0, "crops": ["Apple", "Potato", "Wheat", "Maize"], "states": ["Himachal Pradesh", "Uttarakhand", "Jammu & Kashmir"]},
+    {"zone": 2, "name": "Eastern Himalayan Region", "lat_min": 26.0, "lat_max": 29.0, "lon_min": 87.0, "lon_max": 97.0, "crops": ["Tea", "Rice", "Maize", "Ginger"], "states": ["Arunachal Pradesh", "Sikkim", "Nagaland", "Meghalaya"]},
+    {"zone": 3, "name": "Lower Gangetic Plains", "lat_min": 22.0, "lat_max": 27.0, "lon_min": 85.0, "lon_max": 90.0, "crops": ["Rice", "Jute", "Potato", "Vegetables"], "states": ["West Bengal", "Bihar (East)"]},
+    {"zone": 4, "name": "Middle Gangetic Plains", "lat_min": 25.0, "lat_max": 28.0, "lon_min": 80.0, "lon_max": 88.0, "crops": ["Rice", "Wheat", "Sugarcane", "Pulses"], "states": ["Uttar Pradesh", "Bihar"]},
+    {"zone": 5, "name": "Upper Gangetic Plains", "lat_min": 27.0, "lat_max": 30.0, "lon_min": 76.0, "lon_max": 82.0, "crops": ["Wheat", "Sugarcane", "Rice", "Mustard"], "states": ["Uttar Pradesh (West)", "Uttarakhand (Terai)"]},
+    {"zone": 6, "name": "Trans-Gangetic Plains", "lat_min": 27.0, "lat_max": 32.0, "lon_min": 73.0, "lon_max": 78.0, "crops": ["Wheat", "Rice", "Cotton", "Sunflower"], "states": ["Punjab", "Haryana", "Delhi"]},
+    {"zone": 7, "name": "Eastern Plateau & Hills", "lat_min": 19.0, "lat_max": 26.0, "lon_min": 80.0, "lon_max": 87.0, "crops": ["Rice", "Sorghum", "Pulses", "Oilseeds"], "states": ["Jharkhand", "Chhattisgarh", "Odisha (North)"]},
+    {"zone": 8, "name": "Central Plateau & Hills", "lat_min": 20.0, "lat_max": 26.0, "lon_min": 74.0, "lon_max": 82.0, "crops": ["Soybean", "Cotton", "Sorghum", "Wheat"], "states": ["Madhya Pradesh", "Maharashtra (Vidarbha)", "Rajasthan (SE)"]},
+    {"zone": 9, "name": "Western Plateau & Hills", "lat_min": 17.0, "lat_max": 22.0, "lon_min": 72.0, "lon_max": 78.0, "crops": ["Cotton", "Sorghum", "Groundnut", "Pulses"], "states": ["Maharashtra", "Gujarat (East)"]},
+    {"zone": 10, "name": "Southern Plateau & Hills", "lat_min": 14.0, "lat_max": 18.0, "lon_min": 76.0, "lon_max": 80.0, "crops": ["Cotton", "Groundnut", "Sorghum", "Sunflower"], "states": ["Andhra Pradesh (North)", "Telangana", "Karnataka (North)"]},
+    {"zone": 11, "name": "East Coast Plains & Hills", "lat_min": 10.0, "lat_max": 20.0, "lon_min": 79.0, "lon_max": 87.0, "crops": ["Rice", "Sugarcane", "Coconut", "Groundnut"], "states": ["Andhra Pradesh", "Odisha (South)", "Tamil Nadu (North)"]},
+    {"zone": 12, "name": "West Coast Plains & Ghats", "lat_min": 8.0, "lat_max": 22.0, "lon_min": 72.0, "lon_max": 77.0, "crops": ["Rice", "Coconut", "Cashew", "Rubber", "Spices"], "states": ["Kerala", "Karnataka (Coast)", "Goa", "Maharashtra (Konkan)"]},
+    {"zone": 13, "name": "Gujarat Plains & Hills", "lat_min": 20.0, "lat_max": 25.0, "lon_min": 68.0, "lon_max": 74.0, "crops": ["Cotton", "Groundnut", "Wheat", "Bajra"], "states": ["Gujarat"]},
+    {"zone": 14, "name": "Western Dry Region", "lat_min": 24.0, "lat_max": 30.0, "lon_min": 68.0, "lon_max": 75.0, "crops": ["Bajra", "Cluster Bean", "Mustard", "Cotton"], "states": ["Rajasthan"]},
+    {"zone": 15, "name": "Southern Plateau Tamil Nadu", "lat_min": 8.0, "lat_max": 13.5, "lon_min": 76.5, "lon_max": 80.5, "crops": ["Rice", "Cotton", "Sugarcane", "Groundnut", "Banana"], "states": ["Tamil Nadu", "Puducherry"]},
+]
+
+# KVK + FPO Drone Stations (representative national network)
+INDIA_KVK_STATIONS = [
+    {"id": "KVK-TN-01", "name": "KVK Tiruchirappalli", "lat": 10.7905, "lon": 78.7047, "state": "Tamil Nadu", "fpo": "Cauvery Delta FPO", "drone_fleet": 8},
+    {"id": "KVK-TN-02", "name": "KVK Coimbatore", "lat": 11.0168, "lon": 76.9558, "state": "Tamil Nadu", "fpo": "Kongu Farm Collective", "drone_fleet": 6},
+    {"id": "KVK-TN-03", "name": "KVK Thanjavur", "lat": 10.7867, "lon": 79.1378, "state": "Tamil Nadu", "fpo": "Kaveri Delta FPO", "drone_fleet": 10},
+    {"id": "KVK-MH-01", "name": "KVK Pune", "lat": 18.5204, "lon": 73.8567, "state": "Maharashtra", "fpo": "Deccan Agri FPO", "drone_fleet": 12},
+    {"id": "KVK-MH-02", "name": "KVK Nagpur", "lat": 21.1458, "lon": 79.0882, "state": "Maharashtra", "fpo": "Vidarbha Cotton FPO", "drone_fleet": 9},
+    {"id": "KVK-PB-01", "name": "KVK Ludhiana", "lat": 30.9010, "lon": 75.8573, "state": "Punjab", "fpo": "Punjab Kisan FPO", "drone_fleet": 15},
+    {"id": "KVK-UP-01", "name": "KVK Lucknow", "lat": 26.8467, "lon": 80.9462, "state": "Uttar Pradesh", "fpo": "UP Agro FPO", "drone_fleet": 11},
+    {"id": "KVK-GJ-01", "name": "KVK Anand", "lat": 22.5563, "lon": 72.9525, "state": "Gujarat", "fpo": "Gujarat Farm Cooperative", "drone_fleet": 14},
+    {"id": "KVK-AP-01", "name": "KVK Guntur", "lat": 16.3067, "lon": 80.4365, "state": "Andhra Pradesh", "fpo": "Krishna Delta FPO", "drone_fleet": 10},
+    {"id": "KVK-KA-01", "name": "KVK Dharwad", "lat": 15.4589, "lon": 75.0078, "state": "Karnataka", "fpo": "North Karnataka FPO", "drone_fleet": 8},
+    {"id": "KVK-MP-01", "name": "KVK Indore", "lat": 22.7196, "lon": 75.8577, "state": "Madhya Pradesh", "fpo": "MP Soybean FPO", "drone_fleet": 7},
+    {"id": "KVK-RJ-01", "name": "KVK Jodhpur", "lat": 26.2389, "lon": 73.0243, "state": "Rajasthan", "fpo": "Marwar FPO", "drone_fleet": 6},
+    {"id": "KVK-WB-01", "name": "KVK Kalyani", "lat": 22.9750, "lon": 88.4344, "state": "West Bengal", "fpo": "Bengal Farmers FPO", "drone_fleet": 9},
+    {"id": "KVK-TS-01", "name": "KVK Hyderabad", "lat": 17.3850, "lon": 78.4867, "state": "Telangana", "fpo": "Telangana Rice FPO", "drone_fleet": 11},
+    {"id": "KVK-KL-01", "name": "KVK Thrissur", "lat": 10.5276, "lon": 76.2144, "state": "Kerala", "fpo": "Kerala Spice FPO", "drone_fleet": 5},
+]
+
+# India state center coordinates for PIN/location lookup
+INDIA_STATES = {
+    "Tamil Nadu": {"lat": 11.1271, "lon": 78.6569, "code": "TN"},
+    "Maharashtra": {"lat": 19.7515, "lon": 75.7139, "code": "MH"},
+    "Punjab": {"lat": 31.1471, "lon": 75.3412, "code": "PB"},
+    "Uttar Pradesh": {"lat": 26.8467, "lon": 80.9462, "code": "UP"},
+    "Gujarat": {"lat": 22.2587, "lon": 71.1924, "code": "GJ"},
+    "Karnataka": {"lat": 15.3173, "lon": 75.7139, "code": "KA"},
+    "Andhra Pradesh": {"lat": 15.9129, "lon": 79.7400, "code": "AP"},
+    "Telangana": {"lat": 18.1124, "lon": 79.0193, "code": "TS"},
+    "West Bengal": {"lat": 22.9868, "lon": 87.8550, "code": "WB"},
+    "Rajasthan": {"lat": 27.0238, "lon": 74.2179, "code": "RJ"},
+    "Madhya Pradesh": {"lat": 22.9734, "lon": 78.6569, "code": "MP"},
+    "Haryana": {"lat": 29.0588, "lon": 76.0856, "code": "HR"},
+    "Bihar": {"lat": 25.0961, "lon": 85.3131, "code": "BR"},
+    "Odisha": {"lat": 20.9517, "lon": 85.0985, "code": "OD"},
+    "Kerala": {"lat": 10.8505, "lon": 76.2711, "code": "KL"},
+    "Assam": {"lat": 26.2006, "lon": 92.9376, "code": "AS"},
+    "Chhattisgarh": {"lat": 21.2787, "lon": 81.8661, "code": "CG"},
+    "Jharkhand": {"lat": 23.6102, "lon": 85.2799, "code": "JH"},
+    "Uttarakhand": {"lat": 30.0668, "lon": 79.0193, "code": "UK"},
+    "Himachal Pradesh": {"lat": 31.1048, "lon": 77.1734, "code": "HP"},
+    "Goa": {"lat": 15.2993, "lon": 74.1240, "code": "GA"},
+    "Tripura": {"lat": 23.9408, "lon": 91.9882, "code": "TR"},
+    "Manipur": {"lat": 24.6637, "lon": 93.9063, "code": "MN"},
+    "Meghalaya": {"lat": 25.4670, "lon": 91.3662, "code": "ML"},
+    "Nagaland": {"lat": 26.1584, "lon": 94.5624, "code": "NL"},
+    "Sikkim": {"lat": 27.5330, "lon": 88.5122, "code": "SK"},
+    "Arunachal Pradesh": {"lat": 28.2180, "lon": 94.7278, "code": "AR"},
+    "Mizoram": {"lat": 23.1645, "lon": 92.9376, "code": "MZ"},
+}
+
+def _get_agro_zone(lat: float, lon: float) -> dict:
+    """Get India agro-climatic zone for given coordinates."""
+    for zone in INDIA_AGRO_ZONES:
+        if zone["lat_min"] <= lat <= zone["lat_max"] and zone["lon_min"] <= lon <= zone["lon_max"]:
+            return zone
+    # Default - find nearest by center
+    nearest = min(INDIA_AGRO_ZONES, key=lambda z: (
+        ((lat - (z["lat_min"] + z["lat_max"])/2)**2 + (lon - (z["lon_min"] + z["lon_max"])/2)**2)
+    ))
+    return nearest
+
+def _get_nearest_kvk(lat: float, lon: float) -> dict:
+    """Get nearest KVK station and FPO fleet hub for given coordinates."""
+    return min(INDIA_KVK_STATIONS, key=lambda k: (
+        math.sqrt((lat - k["lat"])**2 + (lon - k["lon"])**2)
+    ))
+
+def _dgca_airspace_status(lat: float, lon: float) -> dict:
+    """DGCA Digital Sky airspace classification for autonomous drone operations."""
+    # Real DGCA zones: Airports (5km NFZ) + controlled airspace
+    # For demo: major airport exclusion zones
+    MAJOR_AIRPORTS = [
+        {"name": "Chennai Intl", "lat": 12.9900, "lon": 80.1693, "nfz_km": 5.0},
+        {"name": "Mumbai CSIA", "lat": 19.0887, "lon": 72.8679, "nfz_km": 5.0},
+        {"name": "Delhi IGI", "lat": 28.5562, "lon": 77.1000, "nfz_km": 5.0},
+        {"name": "Bangalore KIAL", "lat": 13.1986, "lon": 77.7066, "nfz_km": 5.0},
+        {"name": "Hyderabad RGIA", "lat": 17.2403, "lon": 78.4294, "nfz_km": 5.0},
+        {"name": "Kolkata Netaji", "lat": 22.6520, "lon": 88.4463, "nfz_km": 5.0},
+        {"name": "Ahmedabad Sardar", "lat": 23.0772, "lon": 72.6347, "nfz_km": 5.0},
+        {"name": "Pune Lohegaon", "lat": 18.5793, "lon": 73.9089, "nfz_km": 5.0},
+    ]
+    for airport in MAJOR_AIRPORTS:
+        dist_km = math.sqrt((lat - airport["lat"])**2 + (lon - airport["lon"])**2) * 111
+        if dist_km < airport["nfz_km"]:
+            return {
+                "status": "RED",
+                "zone": "No-Fly Zone",
+                "reason": f"Within {airport['nfz_km']}km of {airport['name']} airport",
+                "drone_ops_permitted": False,
+                "max_altitude_m": 0,
+                "icar_sop": "DGCA AI No 2023 - Para 8.2 - Airports & Controlled Airspace"
+            }
+        elif dist_km < airport["nfz_km"] * 3:
+            return {
+                "status": "YELLOW",
+                "zone": "Yellow Zone — Permission Required",
+                "reason": f"{dist_km:.1f}km from {airport['name']} — DGCA permission via Digital Sky required",
+                "drone_ops_permitted": False,
+                "max_altitude_m": 60,
+                "icar_sop": "DGCA AI No 2023 - Para 8.3 - Yellow Zone SOP"
+            }
+    # Green Zone — standard agricultural drone ops permitted
+    return {
+        "status": "GREEN",
+        "zone": "Green Zone — Permitted",
+        "reason": "Agricultural drone operations permitted up to 400 ft AGL per DGCA SOP",
+        "drone_ops_permitted": True,
+        "max_altitude_m": 122,  # 400 ft
+        "icar_sop": "DGCA AI No 2023 - Para 8.1 - Green Zone Agricultural Operations",
+        "drone_cert": "NPNT compliant — no prior permission needed for BVLOS micro class"
+    }
+
+def _calculate_regional_weather(lat: float, lon: float) -> dict:
+    """Calculate realistic regional microclimate for any Indian coordinate."""
+    import datetime as _dt
+    month = _dt.datetime.now().month
+    # Determine season
+    if month in [12, 1, 2]:    # Winter
+        base_temp = 15.0 + (lat - 20) * -0.8
+        base_humidity = 45.0
+        base_wind = 8.0
+        base_rain = 10.0
+    elif month in [3, 4, 5]:   # Summer
+        base_temp = 30.0 + (lat - 20) * -0.5
+        base_humidity = 35.0
+        base_wind = 12.0
+        base_rain = 5.0
+    elif month in [6, 7, 8, 9]: # Monsoon
+        base_temp = 26.0 + (lat - 20) * -0.4
+        base_humidity = 85.0
+        base_wind = 18.0
+        base_rain = 70.0
+    else:                        # Post-monsoon Oct/Nov
+        base_temp = 24.0 + (lat - 20) * -0.5
+        base_humidity = 65.0
+        base_wind = 10.0
+        base_rain = 30.0
+    # Coastal humidity boost
+    coast_dist = min(abs(lon - 72.0), abs(lon - 80.5), abs(lon - 88.0))
+    if coast_dist < 2.0:
+        base_humidity = min(95.0, base_humidity + 15.0)
+        base_temp = base_temp - 2.0
+    # Clamp
+    temp_c = round(max(5.0, min(50.0, base_temp + random.uniform(-1.5, 1.5))), 1)
+    humidity = round(max(10.0, min(99.0, base_humidity + random.uniform(-5.0, 5.0))), 1)
+    wind_kmh = round(max(2.0, min(80.0, base_wind + random.uniform(-3.0, 3.0))), 1)
+    rain_prob = round(max(0.0, min(95.0, base_rain + random.uniform(-10.0, 10.0))), 1)
+    risk = "HIGH" if temp_c > 30 and humidity > 70 else "MODERATE" if temp_c > 25 else "LOW"
+    return {"temperature_c": temp_c, "humidity_percent": humidity, "wind_speed_kmh": wind_kmh,
+            "rain_probability": rain_prob, "pest_risk": risk, "latitude": lat, "longitude": lon}
+
 # ─── FARMERS ───────────────────────────────────────────────
 @app.get("/api/farmers", response_model=List[FarmerOut])
 def list_farmers(db: Session = Depends(get_db)):
@@ -284,6 +487,57 @@ def update_language(farmer_id: int, body: LanguageUpdate, db: Session = Depends(
     f.language = body.language; db.commit()
     return {"ok": True, "language": body.language}
 
+@app.put("/api/farmers/{farmer_id}/location")
+def update_farmer_location(farmer_id: int, body: FarmerLocationUpdate, db: Session = Depends(get_db)):
+    """
+    Update farmer's farm GPS location, boundary polygon, and administrative details.
+    Supports dual-mode: GPS auto-locate or manual national location entry.
+    """
+    f = db.get(Farmer, farmer_id)
+    if not f: raise HTTPException(404, "Farmer not found")
+
+    # Validate coordinates are within India
+    if not (6.0 <= body.latitude <= 37.0 and 68.0 <= body.longitude <= 97.5):
+        raise HTTPException(400, "Coordinates must be within India (lat 6–37, lon 68–97.5)")
+
+    f.latitude = body.latitude
+    f.longitude = body.longitude
+    if body.village: f.village = body.village
+    if body.district: f.district = body.district
+    if body.state: f.state = body.state
+    if body.farm_size_acres and body.farm_size_acres > 0: f.farm_size_acres = body.farm_size_acres
+
+    # Update the associated farm record
+    farm = db.query(Farm).filter(Farm.farmer_id == farmer_id).first()
+    if farm:
+        farm.latitude = body.latitude
+        farm.longitude = body.longitude
+        if body.farm_name: farm.name = body.farm_name
+        if body.farm_size_acres and body.farm_size_acres > 0: farm.total_area_acres = body.farm_size_acres
+        # Update first field if polygon provided
+        if body.polygon:
+            field = db.query(Field).filter(Field.farm_id == farm.id).first()
+            if field:
+                field.polygon = body.polygon
+                field.latitude = body.latitude
+                field.longitude = body.longitude
+                if body.farm_size_acres and body.farm_size_acres > 0: field.area_acres = body.farm_size_acres
+
+    zone = _get_agro_zone(body.latitude, body.longitude)
+    kvk = _get_nearest_kvk(body.latitude, body.longitude)
+    dgca = _dgca_airspace_status(body.latitude, body.longitude)
+
+    db.add(EventLog(agent_name="System", message=f"Farm location updated for {f.name}: {body.latitude:.4f},{body.longitude:.4f} ({body.district or 'unknown'}, {body.state or 'unknown'})", event_type="location_update", severity="info"))
+    db.commit()
+    return {
+        "ok": True, "latitude": body.latitude, "longitude": body.longitude,
+        "district": body.district, "state": body.state, "village": body.village,
+        "farm_size_acres": body.farm_size_acres,
+        "agro_zone": {"zone": zone["zone"], "name": zone["name"], "recommended_crops": zone["crops"]},
+        "nearest_kvk": {"id": kvk["id"], "name": kvk["name"], "fpo": kvk["fpo"], "drone_fleet": kvk["drone_fleet"]},
+        "dgca_airspace": dgca
+    }
+
 # ─── FIELDS ────────────────────────────────────────────────
 @app.get("/api/fields")
 def list_fields(db: Session = Depends(get_db)):
@@ -300,6 +554,41 @@ def list_fields(db: Session = Depends(get_db)):
             "farm_id": f.farm_id
         })
     return result
+
+@app.post("/api/fields")
+def create_field(data: FieldCreate, db: Session = Depends(get_db)):
+    """Create a new field under a farmer's farm."""
+    farm = None
+    if data.farm_id:
+        farm = db.get(Farm, data.farm_id)
+    if not farm:
+        # Find the first farm
+        farm = db.query(Farm).first()
+    if not farm:
+        raise HTTPException(404, "No farm found. Register a farmer first.")
+    field = Field(farm_id=farm.id, name=data.name, crop=data.crop, area_acres=data.area_acres,
+                  growth_stage=data.growth_stage, health_status="healthy",
+                  latitude=data.latitude, longitude=data.longitude, polygon=data.polygon)
+    db.add(field); db.commit(); db.refresh(field)
+    return {"id": field.id, "name": field.name, "crop": field.crop, "area_acres": field.area_acres,
+            "latitude": field.latitude, "longitude": field.longitude}
+
+@app.put("/api/fields/{field_id}")
+def update_field(field_id: int, data: FieldUpdate, db: Session = Depends(get_db)):
+    """Update field details including GPS coordinates and polygon boundary."""
+    field = db.get(Field, field_id)
+    if not field: raise HTTPException(404, "Field not found")
+    if data.name is not None: field.name = data.name
+    if data.crop is not None: field.crop = data.crop
+    if data.area_acres is not None: field.area_acres = data.area_acres
+    if data.growth_stage is not None: field.growth_stage = data.growth_stage
+    if data.health_status is not None: field.health_status = data.health_status
+    if data.latitude is not None: field.latitude = data.latitude
+    if data.longitude is not None: field.longitude = data.longitude
+    if data.polygon is not None: field.polygon = data.polygon
+    db.commit(); db.refresh(field)
+    return {"id": field.id, "name": field.name, "crop": field.crop, "area_acres": field.area_acres,
+            "latitude": field.latitude, "longitude": field.longitude, "polygon": field.polygon}
 
 # ─── DETECTIONS ────────────────────────────────────────────
 @app.get("/api/scenarios")
@@ -608,6 +897,7 @@ def list_agents(db: Session = Depends(get_db)):
     return db.query(Agent).all()
 
 # ─── MISSIONS ──────────────────────────────────────────────
+@app.get("/api/missions/")  # trailing slash alias
 @app.get("/api/missions")
 def list_missions(db: Session = Depends(get_db)):
     missions = db.query(Mission).order_by(Mission.created_at.desc()).all()
@@ -691,7 +981,22 @@ def update_mission_status(mission_id: int, action: str, db: Session = Depends(ge
 
 # ─── WEATHER ───────────────────────────────────────────────
 @app.get("/api/weather")
-def get_weather(db: Session = Depends(get_db)):
+def get_weather(latitude: Optional[float] = None, longitude: Optional[float] = None, db: Session = Depends(get_db)):
+    """Get weather data. If lat/lon provided, returns dynamic regional microclimate for that Indian location."""
+    if latitude is not None and longitude is not None:
+        # Dynamic regional weather for any Indian coordinate
+        regional = _calculate_regional_weather(latitude, longitude)
+        zone = _get_agro_zone(latitude, longitude)
+        kvk = _get_nearest_kvk(latitude, longitude)
+        dist_km = round(math.sqrt((latitude - kvk["lat"])**2 + (longitude - kvk["lon"])**2) * 111, 1)
+        return {
+            **regional,
+            "source": "regional_model",
+            "agro_zone": zone["name"],
+            "nearest_kvk": kvk["name"],
+            "kvk_distance_km": dist_km,
+            "created_at": _now().isoformat()
+        }
     w = db.query(WeatherSnapshot).order_by(WeatherSnapshot.id.desc()).first()
     if not w:
         w = WeatherSnapshot(latitude=10.7905, longitude=78.7047, temperature_c=29, humidity_percent=78, wind_speed_kmh=11, rain_probability=18)
@@ -700,7 +1005,7 @@ def get_weather(db: Session = Depends(get_db)):
     return {
         "temperature_c": w.temperature_c, "humidity_percent": w.humidity_percent,
         "wind_speed_kmh": w.wind_speed_kmh, "rain_probability": w.rain_probability,
-        "pest_risk": risk, "created_at": w.created_at.isoformat()
+        "pest_risk": risk, "source": "database", "created_at": w.created_at.isoformat()
     }
 
 # ─── EVENTS ────────────────────────────────────────────────
@@ -783,16 +1088,121 @@ def list_crops():
 # ─── LOCATIONS ─────────────────────────────────────────────
 @app.get("/api/locations/states")
 def list_states():
-    return ["Tamil Nadu", "Andhra Pradesh", "Telangana", "Karnataka", "Kerala", "Maharashtra", "West Bengal", "Gujarat", "Rajasthan", "Uttar Pradesh"]
+    return sorted(INDIA_STATES.keys())
 
 @app.get("/api/locations/districts")
 def list_districts(state: str = "Tamil Nadu"):
     data = {
-        "Tamil Nadu": ["Tiruchirappalli", "Chennai", "Coimbatore", "Madurai", "Salem", "Tirunelveli", "Erode", "Thanjavur", "Dindigul", "Ariyalur"],
-        "Karnataka": ["Bangalore Rural", "Mysore", "Mandya", "Hassan", "Raichur"],
-        "Andhra Pradesh": ["Guntur", "Prakasam", "Kurnool", "Anantapur"],
+        "Tamil Nadu": ["Ariyalur", "Chennai", "Chengalpattu", "Coimbatore", "Cuddalore", "Dharmapuri", "Dindigul", "Erode", "Kallakurichi", "Kanchipuram", "Kanyakumari", "Karur", "Krishnagiri", "Madurai", "Mayiladuthurai", "Nagapattinam", "Namakkal", "Nilgiris", "Perambalur", "Pudukkottai", "Ramanathapuram", "Ranipet", "Salem", "Sivaganga", "Tenkasi", "Thanjavur", "Theni", "Thoothukudi", "Tiruchirappalli", "Tirunelveli", "Tirupathur", "Tiruppur", "Tiruvallur", "Tiruvannamalai", "Tiruvarur", "Vellore", "Viluppuram", "Virudhunagar"],
+        "Maharashtra": ["Ahmednagar", "Akola", "Amravati", "Aurangabad", "Beed", "Bhandara", "Buldhana", "Chandrapur", "Dhule", "Gadchiroli", "Gondia", "Hingoli", "Jalgaon", "Jalna", "Kolhapur", "Latur", "Mumbai City", "Mumbai Suburban", "Nagpur", "Nanded", "Nandurbar", "Nashik", "Osmanabad", "Palghar", "Parbhani", "Pune", "Raigad", "Ratnagiri", "Sangli", "Satara", "Sindhudurg", "Solapur", "Thane", "Wardha", "Washim", "Yavatmal"],
+        "Punjab": ["Amritsar", "Barnala", "Bathinda", "Faridkot", "Fatehgarh Sahib", "Fazilka", "Ferozepur", "Gurdaspur", "Hoshiarpur", "Jalandhar", "Kapurthala", "Ludhiana", "Mansa", "Moga", "Mohali", "Muktsar", "Nawanshahr", "Pathankot", "Patiala", "Rupnagar", "Sangrur", "Tarn Taran"],
+        "Uttar Pradesh": ["Agra", "Aligarh", "Allahabad", "Ambedkar Nagar", "Amethi", "Amroha", "Auraiya", "Azamgarh", "Baghpat", "Bahraich", "Ballia", "Balrampur", "Banda", "Barabanki", "Bareilly", "Basti", "Bhadohi", "Bijnor", "Budaun", "Bulandshahr", "Chandauli", "Chitrakoot", "Deoria", "Etah", "Etawah", "Faizabad", "Farrukhabad", "Fatehpur", "Firozabad", "Gautam Buddha Nagar", "Ghaziabad", "Ghazipur", "Gonda", "Gorakhpur", "Hamirpur", "Hapur", "Hardoi", "Hathras", "Jalaun", "Jaunpur", "Jhansi", "Kannauj", "Kanpur Dehat", "Kanpur Nagar", "Kasganj", "Kaushambi", "Kushinagar", "Lakhimpur Kheri", "Lalitpur", "Lucknow", "Maharajganj", "Mahoba", "Mainpuri", "Mathura", "Mau", "Meerut", "Mirzapur", "Moradabad", "Muzaffarnagar", "Pilibhit", "Pratapgarh", "Raebareli", "Rampur", "Saharanpur", "Sambhal", "Sant Kabir Nagar", "Shahjahanpur", "Shamli", "Shravasti", "Siddharthnagar", "Sitapur", "Sonbhadra", "Sultanpur", "Unnao", "Varanasi"],
+        "Gujarat": ["Ahmedabad", "Amreli", "Anand", "Aravalli", "Banaskantha", "Bharuch", "Bhavnagar", "Botad", "Chhota Udaipur", "Dahod", "Dang", "Devbhoomi Dwarka", "Gandhinagar", "Gir Somnath", "Jamnagar", "Junagadh", "Kheda", "Kutch", "Mahisagar", "Mehsana", "Morbi", "Narmada", "Navsari", "Panchmahal", "Patan", "Porbandar", "Rajkot", "Sabarkantha", "Surat", "Surendranagar", "Tapi", "Vadodara", "Valsad"],
+        "Karnataka": ["Bagalkote", "Ballari", "Belagavi", "Bengaluru Rural", "Bengaluru Urban", "Bidar", "Chamarajanagara", "Chikkaballapura", "Chikkamagaluru", "Chitradurga", "Dakshina Kannada", "Davanagere", "Dharwad", "Gadag", "Hassan", "Haveri", "Kalaburagi", "Kodagu", "Kolar", "Koppal", "Mandya", "Mysuru", "Raichur", "Ramanagara", "Shivamogga", "Tumakuru", "Udupi", "Uttara Kannada", "Vijayapura", "Yadgir"],
+        "Andhra Pradesh": ["Alluri Sitharama Raju", "Anakapalli", "Anantapur", "Bapatla", "Chittoor", "East Godavari", "Eluru", "Guntur", "Kadapa", "Kakinada", "Konaseema", "Krishna", "Kurnool", "Manyam", "Nandyal", "Nellore", "Palnadu", "Prakasam", "Sri Balaji", "Sri Sathya Sai", "Srikakulam", "Tirupati", "Visakhapatnam", "Vizianagaram", "West Godavari"],
+        "Telangana": ["Adilabad", "Bhadradri Kothagudem", "Hanumakonda", "Hyderabad", "Jagtial", "Jangaon", "Jayashankar Bhupalpally", "Jogulamba Gadwal", "Kamareddy", "Karimnagar", "Khammam", "Komaram Bheem", "Mahabubabad", "Mahabubnagar", "Mancherial", "Medak", "Medchal", "Mulugu", "Nagarkurnool", "Nalgonda", "Narayanpet", "Nirmal", "Nizamabad", "Peddapalli", "Rajanna Sircilla", "Rangareddy", "Sangareddy", "Siddipet", "Suryapet", "Vikarabad", "Wanaparthy", "Warangal", "Yadadri Bhuvanagiri"],
+        "West Bengal": ["Alipurduar", "Bankura", "Birbhum", "Cooch Behar", "Dakshin Dinajpur", "Darjeeling", "Hooghly", "Howrah", "Jalpaiguri", "Jhargram", "Kalimpong", "Kolkata", "Malda", "Murshidabad", "Nadia", "North 24 Parganas", "Paschim Bardhaman", "Paschim Medinipur", "Purba Bardhaman", "Purba Medinipur", "Purulia", "South 24 Parganas", "Uttar Dinajpur"],
+        "Rajasthan": ["Ajmer", "Alwar", "Banswara", "Baran", "Barmer", "Bharatpur", "Bhilwara", "Bikaner", "Bundi", "Chittorgarh", "Churu", "Dausa", "Dholpur", "Dungarpur", "Ganganagar", "Hanumangarh", "Jaipur", "Jaisalmer", "Jalore", "Jhalawar", "Jhunjhunu", "Jodhpur", "Karauli", "Kota", "Nagaur", "Pali", "Pratapgarh", "Rajsamand", "Sawai Madhopur", "Sikar", "Sirohi", "Tonk", "Udaipur"],
+        "Madhya Pradesh": ["Agar Malwa", "Alirajpur", "Anuppur", "Ashoknagar", "Balaghat", "Barwani", "Betul", "Bhind", "Bhopal", "Burhanpur", "Chhatarpur", "Chhindwara", "Damoh", "Datia", "Dewas", "Dhar", "Dindori", "Guna", "Gwalior", "Harda", "Hoshangabad", "Indore", "Jabalpur", "Jhabua", "Katni", "Khandwa", "Khargone", "Mandla", "Mandsaur", "Morena", "Narsinghpur", "Neemuch", "Niwari", "Panna", "Raisen", "Rajgarh", "Ratlam", "Rewa", "Sagar", "Satna", "Sehore", "Seoni", "Shahdol", "Shajapur", "Sheopur", "Shivpuri", "Sidhi", "Singrauli", "Tikamgarh", "Ujjain", "Umaria", "Vidisha"],
+        "Haryana": ["Ambala", "Bhiwani", "Charkhi Dadri", "Faridabad", "Fatehabad", "Gurugram", "Hisar", "Jhajjar", "Jind", "Kaithal", "Karnal", "Kurukshetra", "Mahendragarh", "Nuh", "Palwal", "Panchkula", "Panipat", "Rewari", "Rohtak", "Sirsa", "Sonipat", "Yamunanagar"],
+        "Kerala": ["Alappuzha", "Ernakulam", "Idukki", "Kannur", "Kasaragod", "Kollam", "Kottayam", "Kozhikode", "Malappuram", "Palakkad", "Pathanamthitta", "Thiruvananthapuram", "Thrissur", "Wayanad"],
     }
     return data.get(state, ["District 1", "District 2"])
+
+@app.get("/api/location/info")
+def get_location_info(latitude: float, longitude: float):
+    """
+    National Location Intelligence API:
+    - India Agro-Climatic Zone (Planning Commission 15-zone system)
+    - DGCA Digital Sky Airspace Classification (Green/Yellow/Red)
+    - Nearest KVK Station and FPO Drone Fleet Hub
+    - Regional microclimate for drone mission planning
+    """
+    if not (6.0 <= latitude <= 37.0 and 68.0 <= longitude <= 97.5):
+        raise HTTPException(400, "Coordinates outside India (lat 6–37, lon 68–97.5)")
+
+    zone = _get_agro_zone(latitude, longitude)
+    kvk = _get_nearest_kvk(latitude, longitude)
+    dgca = _dgca_airspace_status(latitude, longitude)
+    weather = _calculate_regional_weather(latitude, longitude)
+    dist_km = round(math.sqrt((latitude - kvk["lat"])**2 + (longitude - kvk["lon"])**2) * 111, 1)
+    eta_min = round(dist_km / 45 * 60)  # Assuming 45km/h average drone travel to site
+
+    # Determine state from coordinates
+    nearest_state = min(INDIA_STATES.items(), key=lambda s: (
+        math.sqrt((latitude - s[1]["lat"])**2 + (longitude - s[1]["lon"])**2)
+    ))
+
+    return {
+        "latitude": latitude,
+        "longitude": longitude,
+        "nearest_state": nearest_state[0],
+        "agro_climatic_zone": {
+            "zone_number": zone["zone"],
+            "zone_name": zone["name"],
+            "states_covered": zone["states"],
+            "recommended_crops": zone["crops"]
+        },
+        "dgca_airspace": dgca,
+        "nearest_kvk": {
+            **{k: v for k, v in kvk.items() if k not in ["lat", "lon"]},
+            "distance_km": dist_km,
+            "estimated_fleet_eta_min": eta_min
+        },
+        "regional_microclimate": weather,
+        "national_program": {
+            "scheme": "SMAM (Sub-Mission on Agricultural Mechanization)",
+            "benefit": "Subsidized drone spraying under ICAR-SMAM scheme",
+            "eligibility": "Registered farmer with PM Kisan Samman Nidhi"
+        }
+    }
+
+@app.get("/api/location/lookup")
+def lookup_location(state: Optional[str] = None, district: Optional[str] = None, pincode: Optional[str] = None):
+    """Get approximate coordinates for a state/district or PIN code (for center-map on manual entry)."""
+    # State center lookup
+    if state and state in INDIA_STATES:
+        s = INDIA_STATES[state]
+        zone = _get_agro_zone(s["lat"], s["lon"])
+        kvk = _get_nearest_kvk(s["lat"], s["lon"])
+        return {
+            "state": state, "latitude": s["lat"], "longitude": s["lon"],
+            "zoom": 9,
+            "agro_zone": zone["name"],
+            "nearest_kvk": kvk["name"],
+            "dgca_status": _dgca_airspace_status(s["lat"], s["lon"])["status"]
+        }
+    # PIN code approximate lookup (offline fallback using known ranges)
+    if pincode and len(pincode) == 6:
+        # Use PIN prefix to approximate region (India PIN zone system)
+        prefix = int(pincode[:2])
+        pin_regions = {
+            (11, 11): {"state": "Delhi", "lat": 28.6139, "lon": 77.2090},
+            (12, 13): {"state": "Haryana", "lat": 29.0588, "lon": 76.0856},
+            (14, 16): {"state": "Punjab", "lat": 30.9010, "lon": 75.8573},
+            (17, 17): {"state": "Himachal Pradesh", "lat": 31.1048, "lon": 77.1734},
+            (18, 19): {"state": "Jammu & Kashmir", "lat": 33.7782, "lon": 76.5762},
+            (20, 28): {"state": "Uttar Pradesh", "lat": 26.8467, "lon": 80.9462},
+            (30, 34): {"state": "Rajasthan", "lat": 27.0238, "lon": 74.2179},
+            (36, 39): {"state": "Gujarat", "lat": 22.2587, "lon": 71.1924},
+            (40, 44): {"state": "Maharashtra", "lat": 19.7515, "lon": 75.7139},
+            (45, 48): {"state": "Madhya Pradesh", "lat": 22.9734, "lon": 78.6569},
+            (49, 49): {"state": "Chhattisgarh", "lat": 21.2787, "lon": 81.8661},
+            (50, 50): {"state": "Telangana", "lat": 18.1124, "lon": 79.0193},
+            (51, 53): {"state": "Andhra Pradesh", "lat": 15.9129, "lon": 79.7400},
+            (56, 59): {"state": "Karnataka", "lat": 15.3173, "lon": 75.7139},
+            (60, 64): {"state": "Tamil Nadu", "lat": 11.1271, "lon": 78.6569},
+            (67, 69): {"state": "Kerala", "lat": 10.8505, "lon": 76.2711},
+            (70, 74): {"state": "West Bengal", "lat": 22.9868, "lon": 87.8550},
+            (75, 76): {"state": "Odisha", "lat": 20.9517, "lon": 85.0985},
+            (80, 85): {"state": "Bihar", "lat": 25.0961, "lon": 85.3131},
+        }
+        for (lo, hi), region in pin_regions.items():
+            if lo <= prefix <= hi:
+                return {"pincode": pincode, "state": region["state"],
+                        "latitude": region["lat"], "longitude": region["lon"], "zoom": 12,
+                        "dgca_status": _dgca_airspace_status(region["lat"], region["lon"])["status"]}
+    return {"latitude": 20.5937, "longitude": 78.9629, "zoom": 5, "state": "India", "note": "Could not resolve. Defaulted to India center."}
 
 # ─── CHEMICAL ROTATION ADVISOR ────────────────────────────
 @app.get("/api/chemical-rotation")
@@ -1215,10 +1625,10 @@ def stream_tts_audio(text: str, lang: str = "en"):
     """
     lang_map = {
         'ta': 'ta', 'hi': 'hi', 'te': 'te', 'kn': 'kn',
-        'ml': 'ml', 'mr': 'mr', 'en': 'en'
+        'ml': 'ml', 'mr': 'mr', 'bn': 'bn', 'gu': 'gu', 'pa': 'pa', 'en': 'en'
     }
     target_lang = lang_map.get(lang, 'en')
-    clean_text = text[:200]
+    clean_text = text[:250]
     encoded = urllib.parse.quote(clean_text)
     google_url = f"https://translate.google.com/translate_tts?ie=UTF-8&client=tw-ob&tl={target_lang}&q={encoded}"
     
@@ -1231,14 +1641,7 @@ def stream_tts_audio(text: str, lang: str = "en"):
             audio_bytes = resp.read()
             return Response(content=audio_bytes, media_type="audio/mpeg")
     except Exception as e:
-        # Fallback to local Windows SAPI if available
-        try:
-            import win32com.client
-            speaker = win32com.client.Dispatch("SAPI.SpVoice")
-            speaker.Speak(clean_text)
-            return {"status": "spoke_via_local_sapi"}
-        except Exception:
-            raise HTTPException(502, f"TTS service error: {str(e)}")
+        raise HTTPException(502, f"TTS service error: {str(e)}")
 
 # ─── SERVE FRONTEND (MUST BE LAST — SPA catch-all) ────────
 frontend_dir = os.path.join(os.path.dirname(__file__), "..", "frontend")
