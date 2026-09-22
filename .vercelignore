@@ -1,0 +1,18 @@
+# Tests & Scratch files
+scratch/
+test_e2e.py
+*.bat
+Makefile
+
+# Documentation & Presentations
+*.md
+*.pdf
+ppt_build/
+
+# Local cache & virtual environments
+__pycache__/
+*.pyc
+.venv/
+node_modules/
+.env*
+!frontend/
