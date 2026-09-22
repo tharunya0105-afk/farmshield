@@ -797,9 +797,6 @@
       'upload leaf photo': 'Uploads a photograph from your device to run on-device neural net inference.',
       'speak result': 'Reads the neural network diagnosis and Top-3 scores aloud.',
       
-      // Hackwell 2.0 Rubrics & Defense Controls
-      '100/100 rubrics': 'Opens the official Hackwell 2.0 Prelims scoring defense console, breaking down our project against all 6 jury criteria for a full 100 out of 100 marks.',
-      'rubric defense': 'Official Hackwell 2.0 Prelims jury scoring guide and proof console.',
       'concept strength': 'Criterion 1: 15 marks. Problem relevance backed by Indian Council of Agricultural Research and Tamil Nadu Agricultural University research data.',
       'technical approach': 'Criterion 2: 15 marks. On-device MobileNetV2 ONNX inference, Leaflet Google GIS, and physical logistic dispersion model.',
       'innovation': 'Criterion 3: 15 marks. Autonomous closed-loop drone containment and multimodal blind voice accessibility.',
@@ -823,13 +820,11 @@
         realtimeOverview: 'நேரடி கூகுள் மேப்ஸ் செயற்கைக்கோள் பண்ணை கண்காணிப்பு மற்றும் ட்ரோன் ரேடார்.',
         sandboxOverview: 'வானிலை மற்றும் காற்று பரவல் பரிசோதனைக்கூடம்.',
         labOverview: 'செயற்கை நுண்ணறிவு இலை நோய் பரிசோதனைக்கூடம்.',
-        rubricsOverview: 'ஹேக்வெல் 2.0 அதிகாரப்பூர்வ நடுவர் மதிப்பீட்டு வழிகாட்டி.',
         farmerOverview: 'விவசாயி மொபைல் செயலி.',
         'start live demo': 'நேரடி மாதிரி செயல்விளக்கம். 6 நிலை தானியங்கி பூச்சி தடுப்பு இயக்கப்படும்.',
         'explore farmer app': 'விவசாயி மொபைல் செயலி. 7 இந்திய மொழிகள் மற்றும் குரல் வழிகாட்டி ஆதரவு கொண்டது.',
         'microclimate sandbox': 'வானிலை மற்றும் காற்று திசை பரவல் பரிசோதனைக்கூடம்.',
         'ai leaf diagnosis lab': 'செயற்கை நுண்ணறிவு இலை நோய் கண்டறியும் கூடம்.',
-        '100/100 rubrics': 'ஹேக்வெல் 2.0 அதிகாரப்பூர்வ நடுவர் மதிப்பீட்டு வழிகாட்டி.',
         'live farm satellite': 'நேரடி கூகுள் மேப்ஸ் செயற்கைக்கோள் பண்ணை கண்காணிப்பு.',
         'start demo': 'தானியங்கி பூச்சி தடுப்பு செயல்விளக்கத்தை தொடங்கு.',
         'run again': 'மாதிரி செயல்விளக்கத்தை மீண்டும் இயக்கு.',
@@ -852,13 +847,11 @@
         realtimeOverview: 'लाइव सैटेलाइट फार्म मॉनिटरिंग और ड्रोन रडार।',
         sandboxOverview: 'माइक्रोक्लाइमेट स्प्रेड सैंडबॉक्स।',
         labOverview: 'एआई पत्ती रोग निदान लैब।',
-        rubricsOverview: 'हैकवेल 2.0 आधिकारिक जूरी स्कोरिंग कंसोल।',
         farmerOverview: 'किसान मोबाइल एप्लिकेशन।',
         'start live demo': 'लाइव डेमो शुरू करें। स्वायत्त 6-चरणीय कीट प्रतिक्रिया।',
         'explore farmer app': 'किसान मोबाइल ऐप खोलें।',
         'microclimate sandbox': 'माइक्रोक्लाइमेट स्प्रेड सैंडबॉक्स खोलें।',
         'ai leaf diagnosis lab': 'एआई पत्ती लैब खोलें।',
-        '100/100 rubrics': 'हैकवेल 2.0 आधिकारिक जूरी स्कोरिंग गाइड।',
         'live farm satellite': 'लाइव गूगल मैप्स सैटेलाइट फार्म व्यू।',
         'start demo': 'स्वायत्त कीट प्रतिक्रिया शुरू करें।',
         'cotton bollworm': 'कपास बॉलवर्म कीट परिदृश्य।',
@@ -5768,7 +5761,7 @@
           {mode === 'farmer' && isMobile && <FarmerApp lang={lang} setLang={setLang} onExit={() => setMode('landing')} />}
           {mode === 'expert' && <ExpertConsole onFarmer={() => setMode('farmer')} onDemo={() => setMode('demo')} />}
 
-          {/* Floating Blind Accessibility Assistant & Rubrics Quick Action */}
+          {/* Floating Blind Accessibility Assistant */}
           <div className="fixed bottom-4 right-4 z-[9999] flex flex-col items-end gap-2 pointer-events-auto" role="region" aria-label="Voice Accessibility Assistant">
 
             {blindMode && (
