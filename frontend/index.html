@@ -982,26 +982,37 @@
     let _globalAudioPlayer = null;
     let _activeSpeechUtterance = null;
     let _voiceGreetingLockUntil = 0;
+    let _audioSessionId = 0;
 
-    function playTTSAudio(text, lang = 'en', onEnd, englishFallback = '') {
-      if (!text && !englishFallback) return;
-      const cleanText = (text || englishFallback).trim();
-      const cleanEnglish = (englishFallback || text).trim();
+    function stopAllAudioAndSpeech() {
+      // Invalidate any pending fallbacks or callbacks
+      ++_audioSessionId;
 
-      // Cancel any ongoing audio or speech synthesis
       if (_globalAudioPlayer) {
         try {
           _globalAudioPlayer.pause();
           _globalAudioPlayer.currentTime = 0;
+          _globalAudioPlayer.onended = null;
+          _globalAudioPlayer.onerror = null;
           _globalAudioPlayer.src = '';
         } catch (e) {}
         _globalAudioPlayer = null;
       }
       if (typeof window !== 'undefined' && window.speechSynthesis) {
         try {
-          if (window.speechSynthesis.speaking) window.speechSynthesis.cancel();
+          window.speechSynthesis.cancel();
         } catch (e) {}
       }
+    }
+
+    function playTTSAudio(text, lang = 'en', onEnd, englishFallback = '') {
+      if (!text && !englishFallback) return;
+      const cleanText = (text || englishFallback).trim();
+      const cleanEnglish = (englishFallback || text).trim();
+
+      // Immediately terminate any prior speech or audio playback
+      stopAllAudioAndSpeech();
+      const thisSession = _audioSessionId;
 
       const encoded = encodeURIComponent(cleanText.slice(0, 250));
       const proxyUrl = `/api/tts?text=${encoded}&lang=${lang}`;
@@ -1010,35 +1021,54 @@
       _globalAudioPlayer = audio;
 
       let fallbackTriggered = false;
-      const doFallback = () => {
+      const doFallback = (err) => {
+        // Stale session or aborted? Do not fall back to speech synthesis!
+        if (thisSession !== _audioSessionId) return;
+        if (err && (err.name === 'AbortError' || (err.message && err.message.includes('interrupted')))) {
+          return;
+        }
         if (fallbackTriggered) return;
         fallbackTriggered = true;
-        speakViaSpeechSynthesis(cleanText, lang, onEnd, cleanEnglish);
+
+        if (_globalAudioPlayer === audio) {
+          try {
+            audio.pause();
+            audio.src = '';
+          } catch(e) {}
+          _globalAudioPlayer = null;
+        }
+
+        speakViaSpeechSynthesis(cleanText, lang, onEnd, cleanEnglish, thisSession);
       };
 
       audio.onended = () => {
-        _globalAudioPlayer = null;
-        if (onEnd) onEnd();
+        if (thisSession === _audioSessionId) {
+          _globalAudioPlayer = null;
+          if (onEnd) onEnd();
+        }
       };
 
-      audio.onerror = () => {
-        doFallback();
+      audio.onerror = (e) => {
+        doFallback(e);
       };
 
       audio.src = proxyUrl;
       const playPromise = audio.play();
       if (playPromise !== undefined) {
-        playPromise.catch(() => {
-          doFallback();
+        playPromise.catch((err) => {
+          doFallback(err);
         });
       }
     }
 
-    function speakViaSpeechSynthesis(text, lang = 'en', onEnd, englishFallback = '') {
+    function speakViaSpeechSynthesis(text, lang = 'en', onEnd, englishFallback = '', sessionId = null) {
       if (typeof window === 'undefined' || !window.speechSynthesis) return;
+      // Stale session check: if a new audio session started, abort immediately!
+      if (sessionId !== null && sessionId !== _audioSessionId) return;
+
       try {
         if (window.speechSynthesis.paused) window.speechSynthesis.resume();
-        if (window.speechSynthesis.speaking) window.speechSynthesis.cancel();
+        window.speechSynthesis.cancel();
 
         const langMap = { ta: 'ta-IN', hi: 'hi-IN', te: 'te-IN', kn: 'kn-IN', ml: 'ml-IN', mr: 'mr-IN', en: 'en-IN' };
         const targetBcp = langMap[lang] || 'en-IN';
@@ -1070,15 +1100,20 @@
 
         _activeSpeechUtterance = u;
         u.onend = () => {
-          _activeSpeechUtterance = null;
-          if (onEnd) onEnd();
+          if (sessionId === null || sessionId === _audioSessionId) {
+            _activeSpeechUtterance = null;
+            if (onEnd) onEnd();
+          }
         };
         u.onerror = () => {
-          _activeSpeechUtterance = null;
-          if (onEnd) onEnd();
+          if (sessionId === null || sessionId === _audioSessionId) {
+            _activeSpeechUtterance = null;
+            if (onEnd) onEnd();
+          }
         };
 
         setTimeout(() => {
+          if (sessionId !== null && sessionId !== _audioSessionId) return;
           try {
             if (window.speechSynthesis.paused) window.speechSynthesis.resume();
             window.speechSynthesis.speak(u);
@@ -1282,7 +1317,10 @@
                         setLang(nl);
                         playAudioTone(440, 880, 0.15);
                         const lObj = LANGS.find(l => l.code === nl);
-                        narrateFeature('Language Changed', `Interface and voice language switched to ${lObj ? lObj.label : nl}`, nl);
+                        const switchedMsg = VOICE_GUIDE_I18N[nl]?.switched || `Interface and voice language switched to ${lObj ? lObj.label : nl}`;
+                        const engSwitched = `Interface and voice language switched to ${lObj ? lObj.label : nl}`;
+                        _voiceGreetingLockUntil = Date.now() + 2000;
+                        playTTSAudio(switchedMsg, nl, null, engSwitched);
                       }}
                       className="bg-transparent text-xs font-semibold text-ink-800 focus:outline-none cursor-pointer pr-1">
                       {LANGS.map(l => (
@@ -2884,7 +2922,10 @@
                     setLang(nl);
                     playAudioTone(440, 880, 0.15);
                     const lObj = LANGS.find(l => l.code === nl);
-                    narrateFeature('Language Changed', `Voice and interface switched to ${lObj ? lObj.label : nl}`, nl);
+                    const switchedMsg = VOICE_GUIDE_I18N[nl]?.switched || `Voice and interface switched to ${lObj ? lObj.label : nl}`;
+                    const engSwitched = `Voice and interface switched to ${lObj ? lObj.label : nl}`;
+                    _voiceGreetingLockUntil = Date.now() + 2000;
+                    playTTSAudio(switchedMsg, nl, null, engSwitched);
                   }}
                   className="bg-transparent text-xs font-semibold text-ink-800 focus:outline-none cursor-pointer pr-1">
                   {LANGS.map(l => (
@@ -5970,23 +6011,29 @@
       const [lastSpoken, setLastSpoken] = useState('');
       const [isSpeaking, setIsSpeaking] = useState(false);
 
+      const prevBlindRef = useRef(blindMode);
+
       // Bulletproof Accessibility Audio, Keyboard & Click Listener for Blind Users
       useEffect(() => {
         try { localStorage.setItem('fs_blind_mode', blindMode ? 'true' : 'false'); } catch (e) {}
         if (!blindMode) {
-          if (_globalAudioPlayer) { try { _globalAudioPlayer.pause(); _globalAudioPlayer.currentTime = 0; } catch (e) {} }
-          if (window.speechSynthesis) { try { window.speechSynthesis.cancel(); } catch (e) {} }
+          prevBlindRef.current = false;
+          stopAllAudioAndSpeech();
           return;
         }
 
-        playAudioTone(440, 880, 0.18);
-        const welcome = VOICE_GUIDE_I18N[lang]?.active || VOICE_GUIDE_I18N.en.active;
-        const engWelcome = VOICE_GUIDE_I18N.en.active;
-        setLastSpoken(welcome);
-        setIsSpeaking(true);
-        _voiceGreetingLockUntil = Date.now() + 2500;
-        playTTSAudio(welcome, lang, () => setIsSpeaking(false), engWelcome);
-
+        // Only play welcome greeting when Blind Voice Mode is initially turned ON
+        // If lang changed, the language switch button/handler handles its own announcement!
+        if (!prevBlindRef.current) {
+          prevBlindRef.current = true;
+          playAudioTone(440, 880, 0.18);
+          const welcome = VOICE_GUIDE_I18N[lang]?.active || VOICE_GUIDE_I18N.en.active;
+          const engWelcome = VOICE_GUIDE_I18N.en.active;
+          setLastSpoken(welcome);
+          setIsSpeaking(true);
+          _voiceGreetingLockUntil = Date.now() + 2500;
+          playTTSAudio(welcome, lang, () => setIsSpeaking(false), engWelcome);
+        }
         let debounceTimer = null;
         const handleInteraction = (e) => {
           if (Date.now() < _voiceGreetingLockUntil) return;
@@ -6038,10 +6085,13 @@
             const nextLang = LANGS[(idx + 1) % LANGS.length].code;
             setLang(nextLang);
             playAudioTone(440, 880, 0.15);
-            const switchedMsg = VOICE_GUIDE_I18N[nextLang]?.switched || `Voice language switched to ${LANGS.find(l=>l.code===nextLang)?.label}`;
+            const lObj = LANGS.find(l => l.code === nextLang);
+            const switchedMsg = VOICE_GUIDE_I18N[nextLang]?.switched || `Voice language switched to ${lObj ? lObj.label : nextLang}`;
+            const engSwitched = `Voice language switched to ${lObj ? lObj.label : nextLang}`;
             setLastSpoken(switchedMsg);
             setIsSpeaking(true);
-            narrateFeature('Language Changed', switchedMsg, nextLang, () => setIsSpeaking(false));
+            _voiceGreetingLockUntil = Date.now() + 2000;
+            playTTSAudio(switchedMsg, nextLang, () => setIsSpeaking(false), engSwitched);
           } else if (e.altKey && (e.key === 't' || e.key === 'T')) {
             e.preventDefault();
             playAudioTone(440, 880, 0.2);
@@ -6164,9 +6214,11 @@
                           setLang(l.code);
                           playAudioTone(440, 880, 0.15);
                           const switchedMsg = VOICE_GUIDE_I18N[l.code]?.switched || `Voice language switched to ${l.label}`;
+                          const engSwitched = `Voice language switched to ${l.label}`;
                           setLastSpoken(switchedMsg);
                           setIsSpeaking(true);
-                          narrateFeature('Language Selected', switchedMsg, l.code, () => setIsSpeaking(false));
+                          _voiceGreetingLockUntil = Date.now() + 2000;
+                          playTTSAudio(switchedMsg, l.code, () => setIsSpeaking(false), engSwitched);
                         }}
                         className={`px-2 py-1 rounded-lg text-[11px] font-bold transition-all pressable ${
                           lang === l.code
